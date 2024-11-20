@@ -8,3 +8,4 @@ from .CartItem import CartItems
 from .Discount import Discounts
 from .Order import Orders
 from .OrderItem import OrderItems
+from .VerificationCode import VerificationCodes

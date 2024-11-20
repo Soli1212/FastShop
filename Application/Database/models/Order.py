@@ -37,4 +37,4 @@ class Orders(BaseModel):
     user = relationship("Users", back_populates="orders")
     address = relationship("Addresses", back_populates="orders")
     discount = relationship("Discounts", back_populates="orders")
-    orderItems = relationship("OrderItems", back_populates="orders")
+    order_items = relationship("OrderItems", back_populates="orders")
