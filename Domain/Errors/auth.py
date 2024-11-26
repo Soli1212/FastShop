@@ -1,17 +1,9 @@
 from fastapi import HTTPException, status
 
 
-class SendedCode(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="A code has already been submitted, please try again later")
-
 class LoginAgain(HTTPException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="Please login again")
-
-class ExpiredCode(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="The code has expired")
 
 class DecryptionFailed(HTTPException):
     def __init__(self):
@@ -32,3 +24,7 @@ class NewUserDataNotFound(HTTPException):
 class InformationMismatch(HTTPException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="Information mismatch !")
+
+class UserNotFound(HTTPException):
+    def __init__(self):
+        super().__init__(status_code=status.HTTP_400_BAD_REQUEST, detail="User Not Found !")

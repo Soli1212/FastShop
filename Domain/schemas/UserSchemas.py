@@ -17,3 +17,5 @@ class VerifyCode(BaseModel):
     phone: str = Field( ..., pattern=r"^09\d{9}$", description="Valid Iranian phone number (e.g., 09123456789)")
     code: str = Field( ..., pattern=r"^\d{5}$", description="A 5-digit verification code consisting only of numbers")
 
+class UserPhone(BaseModel):
+    phone: str = Field( ..., pattern=r"^09\d{9}$", description="Valid Iranian phone number (e.g., 09123456789)")
