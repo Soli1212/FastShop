@@ -1,20 +1,18 @@
 from fastapi import Request, Response, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from Application.Database.connection import get_db
 
-from Application.Database.repositories import UserRepositories
 from Application.RedisDB.RedisServices import TokenServices
-from Application.RedisDB import get_redis_client
+from Application.RedisDB import RedisConnection
 from .JwtHandler import TokenHandler
 
 from Domain.Errors.auth import LoginAgain
-from Domain.Errors.auth import UserNotFound
 
 
-async def Authorize(request: Request, 
+async def Authorize(
+        
+        request: Request, 
         response: Response, 
-        db: AsyncSession = Depends(get_db), 
-        rds: get_redis_client = Depends()
+        redis: RedisConnection.get_client = None,
+
     ) -> int:
     
     AccessToken = request.cookies.get("AccessToken", None)
@@ -22,18 +20,17 @@ async def Authorize(request: Request,
     if not AccessToken: raise LoginAgain
    
     if VerifyAccessToken := TokenHandler.Verify_Access_Token(token = AccessToken):
-
-        if not await UserRepositories.Check_Exists_ID(db = db, user_id = VerifyAccessToken["id"]): 
-            raise UserNotFound
         
-        return {"user_id": VerifyAccessToken["id"], "db": db}
+        return VerifyAccessToken["id"]
     
     #--------------------------------------------------------------------------------------------------
 
     RefreshToken = request.cookies.get("RefreshToken", None)
     
     if not RefreshToken: raise LoginAgain
-
+    
+    rds: RedisConnection.client = redis if redis else await RedisConnection.get_client()
+    
     if await TokenServices.is_token_blocked(token = RefreshToken, rds = rds):
         raise LoginAgain
 
@@ -43,9 +40,6 @@ async def Authorize(request: Request,
 
     NewAccessToken = TokenHandler.New_Access_Token(payload = {"id": VerifyRefreshToken["id"]})
 
-    if not await UserRepositories.Check_Exists_ID(db = db, user_id = VerifyRefreshToken["id"]): 
-        raise UserNotFound
-
     response.set_cookie(
         key = "AccessToken",
         value = NewAccessToken,
@@ -54,4 +48,4 @@ async def Authorize(request: Request,
         samesite="Strict",
     )
         
-    return {"user_id": VerifyRefreshToken["id"], "db": db}
+    return VerifyRefreshToken["id"]

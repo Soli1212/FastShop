@@ -1,10 +1,15 @@
-from fastapi import FastAPI, Depends, Response, Request
-from Application.Database.connection import init_db, get_db
+from fastapi import FastAPI
+from Application.Database.connection import init_db
 from Application.RedisDB.connection import RedisConnection
 
 from Application.Auth.Authorize import Authorize
 
+from Presentation import UserRouter
+
 app = FastAPI()
+
+app.include_router(router = UserRouter, prefix = "/user")
+
 
 @app.on_event("startup")
 async def startup():

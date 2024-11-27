@@ -22,14 +22,14 @@ REFRESH_TOKEN_KEY = getenv("REFRESH_TOKEN_KEY")
 class TokenHandler:
 
     @staticmethod
-    def New_Access_Token(payload: dict, exp: int = 20) -> str:
+    def New_Access_Token(payload: dict, exp: int = 15) -> str:
         payload["exp"] = datetime.utcnow() + timedelta(seconds = exp)
         token = encode(payload = payload, key = ACCESS_TOKEN_KEY, algorithm = "HS256")
         return token
 
 
     @staticmethod
-    def New_Refresh_Token(payload: dict, exp: int = 30) -> str:
+    def New_Refresh_Token(payload: dict, exp: int = 7) -> str:
         payload["exp"] = datetime.utcnow() + timedelta(days = exp)
         token = encode(payload = payload, key = REFRESH_TOKEN_KEY, algorithm = "HS256")
         return token

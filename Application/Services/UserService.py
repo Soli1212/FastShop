@@ -8,8 +8,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from aioredis import Redis
 
 from Application.Database.repositories import UserRepositories
-from Application.Database.repositories import VCodeRepositories
 from Application.RedisDB.RedisServices import TokenServices
+from Application.RedisDB.RedisServices import VcodeServices
 from Application.Auth import AESHandler
 from Application.Auth import TokenHandler
 from Application.Auth import Authorize
@@ -30,15 +30,15 @@ from Domain.Errors.auth import InformationMismatch
 class UserServices:
 
     @staticmethod
-    async def Verify_New_User(db: AsyncSession, response: Response, NewUserData: UserCreate):
-
+    async def Verify_New_User(db: AsyncSession, rds: Redis, response: Response, NewUserData: UserCreate):
+        
         if await UserRepositories.Check_Exists_Phone(db = db, phone = NewUserData.phone):
             raise PhoneNumberIsExists
 
         if NewUserData.email and await UserRepositories.Check_Exists_Email(db = db, email = NewUserData.email):
             raise EmailIsExists
         
-        SendCode = await VCodeRepositories.new_verification_code(db = db, phone = NewUserData.phone)
+        SendCode = await VcodeServices.new_verification_code(rds = rds, phone = NewUserData.phone)
         
         UserDataToken = AESHandler(salt = SendCode).encrypt(payload = NewUserData.dict())
 
@@ -53,20 +53,20 @@ class UserServices:
          
         # send {SendCode} with sms 
 
-        return SendCode
+        return SendCode # f"The verification code was sent to number {NewUserData.phone}"
     
     @staticmethod
-    async def Create_New_User(db: AsyncSession, response: Response, request: Request, VerifyData: VerifyCode):
+    async def Create_New_User(db: AsyncSession, rds: Redis, response: Response, request: Request, VerifyData: VerifyCode):
 
-        Vcode = await VCodeRepositories.get_verification_code(db=db, phone = VerifyData.phone)
+        Vcode = await VcodeServices.get_verification_code(rds = rds, phone = VerifyData.phone)
 
         if not Vcode: raise NoneCode
-
-        await VCodeRepositories.delete_verification_code(db = db, phone = VerifyData.phone)
 
         HashedCode = sha256(VerifyData.code.encode('utf-8')).hexdigest()
 
         if HashedCode != Vcode: raise InvalidCode
+
+        await VcodeServices.delete_verification_code(rds = rds, phone = VerifyData.phone)
 
         NewUserData = request.cookies.get("NUinfo", None)
         
@@ -108,26 +108,26 @@ class UserServices:
         
     
     @staticmethod
-    async def LoginRequest(db: AsyncSession, phone: UserPhone):
+    async def LoginRequest(db: AsyncSession, rds: Redis, phone: UserPhone):
         if not await UserRepositories.Check_Exists_Phone(db = db, phone = phone.phone):
             raise UserNotFound
         
-        code = await VCodeRepositories.new_verification_code(
-            db = db, phone = phone.phone
+        code = await VcodeServices.new_verification_code(
+            rds = rds, phone = phone.phone
         ) 
 
         # send {code} with sms
 
-        return code
+        return code # f"The verification code was sent to number {phone.phone}"
     
 
     @staticmethod
-    async def Login(db: AsyncSession, response: Response, VerifyData: VerifyCode):
-        Vcode = await VCodeRepositories.get_verification_code(db=db, phone = VerifyData.phone)
+    async def Login(db: AsyncSession, rds: Redis, response: Response, VerifyData: VerifyCode):
+        Vcode = await VcodeServices.get_verification_code(rds = rds, phone = VerifyData.phone)
 
         if not Vcode: raise NoneCode
 
-        await VCodeRepositories.delete_verification_code(db = db, phone = VerifyData.phone)
+        await VcodeServices.delete_verification_code(rds = rds, phone = VerifyData.phone)
 
         HashedCode = sha256(VerifyData.code.encode('utf-8')).hexdigest()
 
@@ -163,10 +163,9 @@ class UserServices:
 
         
     @staticmethod
-    async def logout(db: AsyncSession, rds: Redis, request: Request, response: Response):
+    async def logout(rds: Redis, request: Request, response: Response):
         auth = await Authorize(
-            db = db,
-            rds = rds,
+            redis = rds,
             request = request,
             response = response 
         )

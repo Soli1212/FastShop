@@ -9,44 +9,38 @@ REDIS_URL = getenv("REDIS_URL")
 
 
 class RedisConnection:
-    _redis_pool = None
+    client = None
 
     @classmethod
     async def initialize(cls):
-        if cls._redis_pool is None:
-            try:
-                cls._redis_pool = await from_url(
-                    REDIS_URL,
-                    max_connections=10,
-                    decode_responses=True
-                )
-                if await cls._redis_pool.ping():
-                    print("Redis connected successfully")
-            except Exception:
-                print("Redis Connection Failed")
-                raise HTTPException(
-                    status_code=500, 
-                    detail="Failed to connect to Redis"
-                )
+        if cls.client: return True
+
+        try:
+            cls.client = await from_url(
+                url = REDIS_URL,
+                max_connections=10,
+                decode_responses=True
+            )
+            
+            if await cls.client.ping():
+                print("Redis connected successfully")
+
+        except Exception:
+            print("Redis Connection Failed")
 
     @classmethod
     async def get_client(cls):
-        if cls._redis_pool is None:
+        if cls.client is None:
             await cls.initialize()
-        return cls._redis_pool
+        if cls.client:
+            return cls.client
+    
 
     @classmethod
     async def close(cls):
-        if cls._redis_pool:
-            await cls._redis_pool.close()
-            cls._redis_pool = None
+        if cls.client:
+            await cls.client.close()
+            cls.client = None
 
 
-async def get_redis_client():
-    redis = await RedisConnection.get_client()
-    if not redis:
-        raise HTTPException(
-            status_code=500, 
-            detail="Redis connection not available"
-        )
-    return redis
+

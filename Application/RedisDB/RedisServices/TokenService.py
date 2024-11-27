@@ -13,3 +13,4 @@ class TokenServices:
         key = f"blocked_token:{token}"
         result = await rds.exists(key)
         return result == 1
+    

@@ -49,12 +49,5 @@ class UserRepositories:
         result = await db.execute(query)
         return result.scalar()
     
-    @staticmethod
-    async def Check_Exists_ID(db: AsyncSession, user_id: str):
-        "Checking the existence of id"
-        query = select(exists().where(Users.id == user_id))
-        result = await db.execute(query)
-        return result.scalar()
-    
     
     
