@@ -2,7 +2,7 @@ from Application.Database import BaseModel
 from sqlalchemy import Column, Integer, String, Boolean, DateTime
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
-from jdatetime import datetime
+from datetime import datetime
 
 class Products(BaseModel):
     __tablename__ = "products"
@@ -29,6 +29,6 @@ class Products(BaseModel):
     
     lux = Column(Boolean, nullable=False, default=True)
 
-    created_at = Column(String, default=lambda: datetime.now().strftime("%Y/%m/%d %H:%M:%S"), nullable=False)
+    created_at = Column(String, default = datetime.utcnow, nullable=False)
 
     images = relationship("ProductImages", back_populates="product")

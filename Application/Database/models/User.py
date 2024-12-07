@@ -1,31 +1,26 @@
+from sqlalchemy import Column, Integer, String, DateTime, UUID
 from datetime import datetime
-from Application.Database import BaseModel
-from sqlalchemy import Column, Integer, String, Enum, DateTime
 from sqlalchemy.orm import relationship
-import enum
+from uuid import uuid4
+from Application.Database import BaseModel
 
-
-class GenderEnum(enum.Enum):
-    male = "male"
-    female = "female"
 
 class Users(BaseModel):
     __tablename__ = 'users'
 
-    id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-
+    id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
+    
     fullname = Column(String(100), nullable=False)
-
-    phone = Column(String(11), nullable=False, unique=True, index=True)
-
+    
+    phone = Column(String(15), nullable=False, unique=True, index = True)
+    
     email = Column(String(100), nullable=True, unique=True)
-
-    gender = Column(Enum(GenderEnum), nullable=True)
     
-    age = Column(Integer, nullable=True)
+    password = Column(String(255), nullable=False)
     
-    created_at = Column(DateTime, default = datetime.now, nullable=False)
+    created_at = Column(DateTime, default = datetime.utcnow, nullable=False)
 
+    last_password_change = Column(DateTime, default = datetime.utcnow, nullable=False)
+    
     Addresses = relationship("Addresses", back_populates = "user")
-
     orders = relationship("Orders", back_populates="user")

@@ -14,14 +14,16 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from Domain.schemas.UserSchemas import UserCreate
 from Domain.schemas.UserSchemas import VerifyCode
+from Domain.schemas.UserSchemas import UserLogin
 from Domain.schemas.UserSchemas import UserPhone
+from Domain.schemas.UserSchemas import ChangePassword
 
 
 
 Router = APIRouter()
 
 
-@Router.post("/sing-up", status_code = status.HTTP_202_ACCEPTED)
+@Router.post("/sing-UP", status_code = status.HTTP_202_ACCEPTED)
 async def Verify_New_User(
 
     response: Response,
@@ -30,13 +32,13 @@ async def Verify_New_User(
     rds: RedisConnection.get_client = Depends()
 
 ):
-    return await UserServices.Verify_New_User(
+    return await UserServices.sing_in(
         db = db, rds = rds, response = response, 
         NewUserData = NewUserData
     )
 
 
-@Router.post("/singup", status_code = status.HTTP_201_CREATED)
+@Router.post("/singUP", status_code = status.HTTP_201_CREATED)
 async def Create_New_User(
 
     request: Request,
@@ -46,38 +48,49 @@ async def Create_New_User(
     rds: RedisConnection.get_client = Depends()
 
 ):
-    return await UserServices.Create_New_User(
+    return await UserServices.singin(
         db = db, rds = rds, request = request, 
         response = response, VerifyData = VerifyData
     )
 
 
-@Router.post("/sing-in", status_code = status.HTTP_202_ACCEPTED)
+@Router.post("/singIN", status_code = status.HTTP_202_ACCEPTED)
 async def LoginRequest(
+
+    UserData: UserLogin,
+    response: Response,
+    db: AsyncSession = Depends(get_db),
+
+):
+    return await UserServices.login(
+        db = db, UserData = UserData, response = response
+    )
+
+
+@Router.post("/forget-Pass", status_code = status.HTTP_202_ACCEPTED)
+async def ForgetPassword(
 
     phone: UserPhone,
     rds: RedisConnection.get_client = Depends(),
     db: AsyncSession = Depends(get_db),
 
 ):
-    return await UserServices.LoginRequest(
-        db = db, rds = rds, phone = phone
+    return await UserServices.forget_password(
+        db = db, phone = phone, rds = rds
     )
 
+@Router.post("/change-Pass", status_code = status.HTTP_200_OK)
+async def ForgetPassword(
 
-@Router.post("/singin", status_code = status.HTTP_200_OK)
-async def Login(
-
-    response: Response,
-    VerifyData: VerifyCode,
+    UserData: ChangePassword,
     rds: RedisConnection.get_client = Depends(),
-    db: AsyncSession = Depends(get_db)
+    db: AsyncSession = Depends(get_db),
 
 ):
-    return await UserServices.Login(
-        db = db, rds = rds, response = response, 
-        VerifyData = VerifyData 
+    return await UserServices.change_password(
+        db = db, UserData = UserData, rds = rds
     )
+
     
 
 @Router.get("/logout", status_code = status.HTTP_200_OK)
@@ -99,4 +112,4 @@ async def me(
     auth: Authorize = Depends(),
     db: AsyncSession = Depends(get_db)
 ):
-    return await UserServices.get_me(db = db, user_id = auth)
+    return await UserServices.get_me(db = auth["db"], user_id = auth["id"])

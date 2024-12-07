@@ -1,4 +1,4 @@
-from jdatetime import datetime
+from datetime import datetime
 from sqlalchemy import Column, Integer, String, ForeignKey, Float, Enum
 from sqlalchemy.orm import relationship
 from Application.Database import BaseModel
@@ -29,9 +29,7 @@ class Orders(BaseModel):
     status = Column(Enum(OrderStatusEnum), default=OrderStatusEnum.pending, nullable=False)
     
     created_at = Column(
-        String,
-        default = lambda: datetime.now().strftime("%Y/%m/%d %H:%M:%S"),
-        nullable=False
+        String, default = datetime.utcnow, nullable=False
     )
 
     user = relationship("Users", back_populates="orders")

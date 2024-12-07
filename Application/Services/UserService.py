@@ -1,77 +1,83 @@
-from fastapi import Request
-from fastapi import Response
-from datetime import datetime
-from datetime import timedelta
-from datetime import timezone
+from fastapi import Request, Response
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
-from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 from aioredis import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from asyncio import sleep
 
 from Application.Database.repositories import UserRepositories
-from Application.RedisDB.RedisServices import TokenServices
-from Application.RedisDB.RedisServices import VcodeServices
-from Application.Auth import AESHandler
-from Application.Auth import TokenHandler
-from Application.Auth import Authorize
-
-from Domain.schemas.UserSchemas import UserCreate
-from Domain.schemas.UserSchemas import VerifyCode
-from Domain.schemas.UserSchemas import UserPhone
-
-from Domain.Errors.user import PhoneNumberIsExists
-from Domain.Errors.user import EmailIsExists
-from Domain.Errors.user import UserNotFound
-from Domain.Errors.auth import NoneCode
-from Domain.Errors.auth import InvalidCode
-from Domain.Errors.auth import NewUserDataNotFound
-from Domain.Errors.auth import InformationMismatch
+from Application.RedisDB.RedisServices import (
+    TokenServices,
+    VcodeServices,
+    FpasswordForget,
+)
+from Application.Auth import AESHandler, TokenHandler, BcryptHandler
+from Domain.schemas.UserSchemas import (
+    UserCreate,
+    VerifyCode,
+    UserLogin,
+    UserPhone,
+    ChangePassword,
+)
+from Domain.Errors.user import PhoneNumberIsExists, EmailIsExists, UserNotFound
+from Domain.Errors.auth import (
+    NoneCode,
+    InvalidCode,
+    NewUserDataNotFound,
+    InformationMismatch,
+)
 
 
 class UserServices:
-
     @staticmethod
-    async def Verify_New_User(db: AsyncSession, rds: Redis, response: Response, NewUserData: UserCreate):
-        
-        if await UserRepositories.Check_Exists_Phone(db = db, phone = NewUserData.phone):
+    async def sing_in(db: AsyncSession, rds: Redis, response: Response, NewUserData: UserCreate):
+
+        if await UserRepositories.Check_Exists_Phone(db=db, phone=NewUserData.phone):
             raise PhoneNumberIsExists
 
-        if NewUserData.email and await UserRepositories.Check_Exists_Email(db = db, email = NewUserData.email):
+        if NewUserData.email and await UserRepositories.Check_Exists_Email(db=db, email=NewUserData.email):
             raise EmailIsExists
-        
-        SendCode = await VcodeServices.new_verification_code(rds = rds, phone = NewUserData.phone)
-        
-        UserDataToken = AESHandler(salt = SendCode).encrypt(payload = NewUserData.dict())
+
+        hashed_password = BcryptHandler.Hash(password=NewUserData.password)
+        NewUserData.password = hashed_password
+
+        Code = await VcodeServices.new_verification_code(rds=rds, phone=NewUserData.phone)
+        UserDataToken = AESHandler(salt=Code).encrypt(payload=NewUserData.dict())
 
         response.set_cookie(
-            key = "NUinfo",
-            value = UserDataToken,
-            httponly = True,
+            key="NUinfo",
+            value=UserDataToken,
+            httponly=True,
             # secure=True,
             samesite="Strict",
-            expires = datetime.now(timezone.utc) + timedelta(minutes=3)
         )
-         
-        # send {SendCode} with sms 
 
-        return SendCode # f"The verification code was sent to number {NewUserData.phone}"
-    
+        # send code with SMS
+        return Code
+
     @staticmethod
-    async def Create_New_User(db: AsyncSession, rds: Redis, response: Response, request: Request, VerifyData: VerifyCode):
+    async def singin(
+        db: AsyncSession, rds: Redis, request: Request, response: Response, VerifyData: VerifyCode
+    ):
+        Vcode = await VcodeServices.get_verification_code(rds=rds, phone=VerifyData.phone)
 
-        Vcode = await VcodeServices.get_verification_code(rds = rds, phone = VerifyData.phone)
+        if not Vcode:
+            raise NoneCode
 
-        if not Vcode: raise NoneCode
+        HashedCode = sha256(VerifyData.code.encode("utf-8")).hexdigest()
 
-        HashedCode = sha256(VerifyData.code.encode('utf-8')).hexdigest()
+        if HashedCode != Vcode:
+            raise InvalidCode
 
-        if HashedCode != Vcode: raise InvalidCode
-
-        await VcodeServices.delete_verification_code(rds = rds, phone = VerifyData.phone)
+        await VcodeServices.delete_verification_code(rds=rds, phone=VerifyData.phone)
 
         NewUserData = request.cookies.get("NUinfo", None)
-        
-        if not NewUserData: raise NewUserDataNotFound
-        
+
+        if not NewUserData:
+            raise NewUserDataNotFound
+
         response.delete_cookie("NUinfo")
 
         cipher = AESHandler(salt = VerifyData.code)
@@ -79,106 +85,119 @@ class UserServices:
 
         if DecryptedNewUserData.get("phone") != VerifyData.phone:
             raise InformationMismatch
-        
-        if await UserRepositories.Check_Exists_Phone(db = db, phone = VerifyData.phone):
-            raise PhoneNumberIsExists
 
-        NewUser = await UserRepositories.Create_User(
-            db = db, 
-            NewUserData = UserCreate(**DecryptedNewUserData)
-        )
-        if NewUser:
-            payload = {"id": NewUser} 
+        if NewUser := await UserRepositories.Create_User(
+            db=db, NewUserData = UserCreate(**DecryptedNewUserData)
+        ):
+            payload = {"id": str(NewUser)}
+            AccessToken = TokenHandler.New_Access_Token(payload=payload)
+            RefreshToken = TokenHandler.New_Refresh_Token(payload=payload)
+
             response.set_cookie(
-                key = "AccessToken",
-                value = TokenHandler.New_Access_Token(payload = payload),
-                httponly = True,
+                key="AccessToken",
+                value = AccessToken,
+                httponly=True,
                 # secure=True,
                 samesite="Strict",
             )
-           
+
             response.set_cookie(
-                key = "RefreshToken",
-                value = TokenHandler.New_Refresh_Token(payload = payload),
-                httponly = True,
+                key="RefreshToken",
+                value = RefreshToken,
+                httponly=True,
+                # secure=True,
+                samesite="Strict",
+            )
+
+            return "welcome"
+
+    @staticmethod
+    async def login(db: AsyncSession, response: Response, UserData: UserLogin):
+        if user := await UserRepositories.Login(db=db, phone=UserData.phone):
+
+            if not BcryptHandler.check(password=UserData.password, hashed_password = user[1]): 
+                raise InformationMismatch
+
+            payload = {"id": str(user[0])}
+
+            Access_TOKEN = TokenHandler.New_Access_Token(payload=payload)
+            Refresh_TOKEN = TokenHandler.New_Refresh_Token(payload=payload)
+
+            response.set_cookie(
+                key="AccessToken",
+                value=Access_TOKEN,
+                httponly=True,
+                # secure=True,
+                samesite="Strict",
+            )
+            response.set_cookie(
+                key="RefreshToken",
+                value=Refresh_TOKEN,
+                httponly=True,
                 # secure=True,
                 samesite="Strict",
             )
             return "welcome"
-        
-    
-    @staticmethod
-    async def LoginRequest(db: AsyncSession, rds: Redis, phone: UserPhone):
-        if not await UserRepositories.Check_Exists_Phone(db = db, phone = phone.phone):
+        else:
             raise UserNotFound
-        
-        code = await VcodeServices.new_verification_code(
-            rds = rds, phone = phone.phone
-        ) 
-
-        # send {code} with sms
-
-        return code # f"The verification code was sent to number {phone.phone}"
-    
 
     @staticmethod
-    async def Login(db: AsyncSession, rds: Redis, response: Response, VerifyData: VerifyCode):
-        Vcode = await VcodeServices.get_verification_code(rds = rds, phone = VerifyData.phone)
+    async def forget_password(db: AsyncSession, phone: UserPhone, rds: Redis):
+        if not await UserRepositories.Check_Exists_Phone(db=db, phone=phone.phone):
+            raise UserNotFound
 
-        if not Vcode: raise NoneCode
+        code = await FpasswordForget.new_verification_code(rds=rds, phone=phone.phone)
 
-        await VcodeServices.delete_verification_code(rds = rds, phone = VerifyData.phone)
-
-        HashedCode = sha256(VerifyData.code.encode('utf-8')).hexdigest()
-
-        if HashedCode != Vcode: raise InvalidCode
-
-        if user_id := await UserRepositories.get_User_ID_By_Phone(db = db, phone = VerifyData.phone):
-            
-            payload = {"id": user_id} 
-            
-            response.set_cookie(
-                key = "AccessToken",
-                value = TokenHandler.New_Access_Token(payload = payload),
-                httponly = True,
-                # secure=True,
-                samesite="Strict",
-            )
-           
-            response.set_cookie(
-                key = "RefreshToken",
-                value = TokenHandler.New_Refresh_Token(payload = payload),
-                httponly = True,
-                # secure=True,
-                samesite="Strict",
-            )
-            return "welcome"
-        
+        # send code with SMS
+        return code
 
     @staticmethod
-    async def get_me(db: AsyncSession, user_id: int):
-        if user := await UserRepositories.Get_User_By_ID(db = db, user_id = user_id):
-            return user
+    async def change_password(db: AsyncSession, UserData: ChangePassword, rds: Redis):
+        if code := await FpasswordForget.get_forget_code(rds=rds, phone=UserData.phone):
+            HashedCode = sha256(UserData.code.encode("utf-8")).hexdigest()
 
+            if code != HashedCode:
+                raise InvalidCode
 
-        
+            await FpasswordForget.delete_forget_code(rds=rds, phone=UserData.phone)
+
+            if User := await UserRepositories.Get_User_By_Phone(db=db, phone=UserData.phone):
+                User.password = BcryptHandler.Hash(password = UserData.password)
+                password_changed_at = datetime.utcnow()
+                
+                print(password_changed_at)
+
+                User.last_password_change = password_changed_at
+                await FpasswordForget.password_changed_at(
+                    rds=rds, user_id=User.id, time=password_changed_at
+                )
+
+                return "Your password has been successfully changed"
+        else:
+            raise NoneCode
+
+    @staticmethod
+    async def get_me(db: AsyncSession, user_id: uuid4):
+        if user := await UserRepositories.Get_User_By_ID(db=db, user_id = user_id):
+            return {
+                "id": user.id,
+                "phone": user.phone,
+                "fullname": user.fullname,
+                "email": user.email,
+            }
+
     @staticmethod
     async def logout(rds: Redis, request: Request, response: Response):
-        auth = await Authorize(
-            redis = rds,
-            request = request,
-            response = response 
-        )
+        refresh_token = request.cookies.get("RefreshToken", None)
 
-        refresh_token = request.cookies.get("RefreshToken")
+        if refresh_token:
+            ex = TokenHandler.get_token_exp_as_secounds(token=refresh_token)
+            Isblocked = await TokenServices.is_token_blocked(token=refresh_token, rds=rds)
 
-        ex = TokenHandler.get_token_exp_as_secounds(token = refresh_token)
-        Isblocked = await TokenServices.is_token_blocked(token = refresh_token, rds = rds)
+            if ex and not Isblocked:
+                await TokenServices.block_token(token=refresh_token, expiry=ex, rds=rds)
 
-        if ex and not Isblocked:
-            await TokenServices.block_token(token=refresh_token, expiry=ex, rds=rds)
-
-        response.delete_cookie(key = "AccessToken")
-        response.delete_cookie(key = "RefreshToken")
+        response.delete_cookie(key="AccessToken")
+        response.delete_cookie(key="RefreshToken")
 
         return {"message": "Logged out successfully"}

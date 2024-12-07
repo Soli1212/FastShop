@@ -7,11 +7,11 @@ from base64 import b64decode
 from datetime import datetime
 from datetime import timedelta
 
+
 from dotenv import load_dotenv
 from os import getenv
 
 from Domain.Errors.auth import LoginAgain
-
 
 
 
@@ -23,14 +23,17 @@ class TokenHandler:
 
     @staticmethod
     def New_Access_Token(payload: dict, exp: int = 15) -> str:
-        payload["exp"] = datetime.utcnow() + timedelta(seconds = exp)
+        payload["exp"] = datetime.utcnow() + timedelta(minutes = exp)
+        payload["iat"] = (datetime.utcnow() + timedelta(seconds = 1)).timestamp()
         token = encode(payload = payload, key = ACCESS_TOKEN_KEY, algorithm = "HS256")
+        print(datetime.utcnow())
         return token
 
 
     @staticmethod
     def New_Refresh_Token(payload: dict, exp: int = 7) -> str:
         payload["exp"] = datetime.utcnow() + timedelta(days = exp)
+        payload["iat"] = (datetime.utcnow() + timedelta(seconds = 1)).timestamp()
         token = encode(payload = payload, key = REFRESH_TOKEN_KEY, algorithm = "HS256")
         return token
 
@@ -40,7 +43,7 @@ class TokenHandler:
         try:
             DecodedToken = decode(jwt = token, key = ACCESS_TOKEN_KEY, algorithms = "HS256")
             return DecodedToken
-        except :
+        except:
             return False
 
     @staticmethod

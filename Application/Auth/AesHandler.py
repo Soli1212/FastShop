@@ -1,7 +1,7 @@
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 from base64 import b64encode, b64decode
-from hashlib import sha256
+from Crypto.Protocol.KDF import PBKDF2
 from json import dumps, loads
 from datetime import timedelta, datetime
 from dotenv import load_dotenv
@@ -13,10 +13,10 @@ load_dotenv()
 
 AES_KEY = getenv("AES_KEY")
 
-
 class AESHandler:
+
     def __init__(self, salt: str) -> None:
-        self.key = sha256((AES_KEY + salt).encode('utf-8')).digest()
+        self.key = PBKDF2((AES_KEY).encode('utf-8'), salt = salt.encode('utf-8'), dkLen=32, count=100000)
 
 
     def encrypt(self, payload: dict, exp: int = 3) -> str:
@@ -42,3 +42,4 @@ class AESHandler:
             return payload
         except Exception:
             raise DecryptionFailed
+
