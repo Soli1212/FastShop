@@ -12,7 +12,7 @@ class Users(BaseModel):
     
     fullname = Column(String(100), nullable=False)
     
-    phone = Column(String(15), nullable=False, unique=True, index = True)
+    phone = Column(String(11), nullable=False, unique=True, index = True)
     
     email = Column(String(100), nullable=True, unique=True)
     

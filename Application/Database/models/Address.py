@@ -1,5 +1,5 @@
 from Application.Database import BaseModel
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, UUID
 from sqlalchemy.orm import relationship
 
 class Addresses(BaseModel):
@@ -7,7 +7,7 @@ class Addresses(BaseModel):
     
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
     
-    user_id = Column(Integer, ForeignKey('users.id', ondelete = "Cascade", onupdate = "Cascade"), nullable=False)
+    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete = "Cascade", onupdate = "Cascade"), nullable=False)
 
     province = Column(String(100), nullable=False)
 
@@ -17,7 +17,7 @@ class Addresses(BaseModel):
 
     postal_code = Column(String(10), nullable=True)
 
-    recipient_phone = Column(String(10), nullable=False)
+    recipient_phone = Column(String(11), nullable=False)
 
     full_address = Column(String, nullable=False) 
 
