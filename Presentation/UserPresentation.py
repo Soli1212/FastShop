@@ -17,6 +17,7 @@ from Domain.schemas.UserSchemas import VerifyCode
 from Domain.schemas.UserSchemas import UserLogin
 from Domain.schemas.UserSchemas import UserPhone
 from Domain.schemas.UserSchemas import ChangePassword
+from Domain.schemas.UserSchemas import UpdateProfile
 
 
 
@@ -33,7 +34,7 @@ async def Verify_New_User(
 
 ):
     return await UserServices.sing_in(
-        db = db, rds = rds, response = response, 
+        db = db, rds = rds,
         NewUserData = NewUserData
     )
 
@@ -92,6 +93,17 @@ async def ForgetPassword(
     )
 
     
+@Router.patch("/update", status_code = status.HTTP_200_OK)
+async def update(
+    profile: UpdateProfile,
+    auth: Authorize = Depends()
+    
+):
+    return await UserServices.update_profile(
+        db = auth["db"],
+        profile = profile,
+        user_id = auth["id"]
+    )
 
 @Router.get("/logout", status_code = status.HTTP_200_OK)
 async def logout(
@@ -110,6 +122,5 @@ async def logout(
 @Router.get("/me", status_code = status.HTTP_200_OK)
 async def me(
     auth: Authorize = Depends(),
-    db: AsyncSession = Depends(get_db)
 ):
     return await UserServices.get_me(db = auth["db"], user_id = auth["id"])

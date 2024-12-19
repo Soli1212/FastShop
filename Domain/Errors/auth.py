@@ -17,10 +17,6 @@ class InvalidCode(HTTPException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail="This code is wrong")
 
-class NewUserDataNotFound(HTTPException):
-    def __init__(self):
-        super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail="New User Data Not Found")
-
 class InformationMismatch(HTTPException):
     def __init__(self):
         super().__init__(status_code=status.HTTP_401_UNAUTHORIZED, detail="Information mismatch !")

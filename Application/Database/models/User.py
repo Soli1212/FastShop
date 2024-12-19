@@ -10,7 +10,7 @@ class Users(BaseModel):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid4)
     
-    fullname = Column(String(100), nullable=False)
+    fullname = Column(String(100), nullable=True)
     
     phone = Column(String(11), nullable=False, unique=True, index = True)
     

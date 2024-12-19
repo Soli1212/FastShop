@@ -1,5 +1,6 @@
 from fastapi import Request, Response
-from datetime import datetime, timedelta, timezone
+from fastapi.responses import RedirectResponse
+from datetime import datetime
 from hashlib import sha256
 from uuid import uuid4
 from aioredis import Redis
@@ -20,41 +21,28 @@ from Domain.schemas.UserSchemas import (
     UserLogin,
     UserPhone,
     ChangePassword,
+    UpdateProfile
 )
 from Domain.Errors.user import PhoneNumberIsExists, EmailIsExists, UserNotFound
 from Domain.Errors.auth import (
     NoneCode,
     InvalidCode,
-    NewUserDataNotFound,
     InformationMismatch,
 )
 
 
 class UserServices:
     @staticmethod
-    async def sing_in(db: AsyncSession, rds: Redis, response: Response, NewUserData: UserCreate):
+    async def sing_in(db: AsyncSession, rds: Redis, NewUserData: UserCreate):
 
         if await UserRepositories.Check_Exists_Phone(db=db, phone=NewUserData.phone):
             raise PhoneNumberIsExists
 
-        if NewUserData.email and await UserRepositories.Check_Exists_Email(db=db, email=NewUserData.email):
-            raise EmailIsExists
-
         hashed_password = BcryptHandler.Hash(password=NewUserData.password)
         NewUserData.password = hashed_password
 
-        Code = await VcodeServices.new_verification_code(rds=rds, phone=NewUserData.phone)
-        UserDataToken = AESHandler(salt=Code).encrypt(payload=NewUserData.dict())
+        Code = await VcodeServices.new_verification_code(rds=rds, user = NewUserData)
 
-        response.set_cookie(
-            key="NUinfo",
-            value=UserDataToken,
-            httponly=True,
-            # secure=True,
-            samesite="Strict",
-        )
-
-        # send code with SMS
         return Code
 
     @staticmethod
@@ -62,32 +50,19 @@ class UserServices:
         db: AsyncSession, rds: Redis, request: Request, response: Response, VerifyData: VerifyCode
     ):
         Vcode = await VcodeServices.get_verification_code(rds=rds, phone=VerifyData.phone)
-
+        
         if not Vcode:
             raise NoneCode
 
         HashedCode = sha256(VerifyData.code.encode("utf-8")).hexdigest()
 
-        if HashedCode != Vcode:
+        if HashedCode != Vcode.get("code"):
             raise InvalidCode
 
         await VcodeServices.delete_verification_code(rds=rds, phone=VerifyData.phone)
 
-        NewUserData = request.cookies.get("NUinfo", None)
-
-        if not NewUserData:
-            raise NewUserDataNotFound
-
-        response.delete_cookie("NUinfo")
-
-        cipher = AESHandler(salt = VerifyData.code)
-        DecryptedNewUserData = cipher.decrypt(encrypted_data=NewUserData)
-
-        if DecryptedNewUserData.get("phone") != VerifyData.phone:
-            raise InformationMismatch
-
         if NewUser := await UserRepositories.Create_User(
-            db=db, NewUserData = UserCreate(**DecryptedNewUserData)
+            db=db, NewUserData = UserCreate(phone = VerifyData.phone, password = Vcode.get("password"))
         ):
             payload = {"id": str(NewUser)}
             AccessToken = TokenHandler.New_Access_Token(payload=payload)
@@ -175,6 +150,14 @@ class UserServices:
                 return "Your password has been successfully changed"
         else:
             raise NoneCode
+        
+    @staticmethod    
+    async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: uuid4):
+        update = await UserRepositories.update(
+            db = db, user_id = user_id, 
+            values = profile.dict()
+        )
+        if update: return "Your profile has been successfully updated"
 
     @staticmethod
     async def get_me(db: AsyncSession, user_id: uuid4):

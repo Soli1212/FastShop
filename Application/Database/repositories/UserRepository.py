@@ -1,6 +1,7 @@
 from Application.Database.models import Users
 from uuid import uuid4
 
+from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import exists
@@ -20,6 +21,12 @@ class UserRepositories:
         await db.flush()
         
         return NewUser.id
+
+    @staticmethod
+    async def update(db: AsyncSession, user_id: uuid4, values: dict):
+        query = update(Users).where(Users.id == user_id).values(**values)
+        result = await db.execute(query)
+        return result
 
     @staticmethod
     async def Login(db: AsyncSession, phone: str):

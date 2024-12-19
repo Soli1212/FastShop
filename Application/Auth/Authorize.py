@@ -13,10 +13,12 @@ from Domain.Errors.auth import LoginAgain
 
 
 async def check_iat(
+        
     db: AsyncSession,
     rds: RedisConnection.get_client,
     user_id: uuid4,
     jwt_iat: datetime,
+
 ) -> bool:
     
     password_changed_at = await FpasswordForget.get_password_changed_at(rds=rds, user_id = user_id)
@@ -31,19 +33,17 @@ async def check_iat(
         datetime.strptime(password_changed_at, "%Y-%m-%d %H:%M:%S.%f")
     ).timestamp()
 
-    print(jwt_iat)
-    print(password_changed_at_timestamp)
-    print(jwt_iat > password_changed_at_timestamp)
-
     return jwt_iat > password_changed_at_timestamp
 
 
 async def Authorize(
+        
     request: Request,
     response: Response,
     redis: RedisConnection.get_client = Depends(),
     db: AsyncSession = Depends(get_db),
-) -> int:
+    
+) -> dict:
     # -------------------------------------------------------------
     AccessToken = request.cookies.get("AccessToken", None)
     RefreshToken = request.cookies.get("RefreshToken", None)

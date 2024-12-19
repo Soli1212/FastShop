@@ -42,11 +42,3 @@ async def add_process_time_header(request: Request, call_next):
     return await call_next(request)
 
 # Root Endpoint ------------------------
-@app.get("/")
-async def get(db: AsyncSession = Depends(get_db)):
-    uid = "b85b4398-f743-4293-9e86-19b0c81d824c"
-    return await AddressRepositories.Get_Address_Count(db, uid)
-
-@app.get("/a")
-async def get(db: AsyncSession = Depends(get_db)):
-    return await AddressRepositories.Delete_Address(db, 14, "b85b4398-f743-4293-9e86-19b0c81d824c")
