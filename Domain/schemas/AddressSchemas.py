@@ -1,7 +1,7 @@
 from pydantic import BaseModel, Field, validator, field_validator
 from fastapi import HTTPException
 from typing import Optional
-import re
+from re import search, match
 
 class NewAddress(BaseModel):
     province: str = Field(..., max_length=100, description="Province of the address")
@@ -25,7 +25,7 @@ class NewAddress(BaseModel):
 
     @field_validator('recipient_phone')
     def validate_recipient_phone(cls, value):
-        if not re.match(r'^09\d{9}$', value):
+        if not match(r'^09\d{9}$', value):
             raise HTTPException(status_code=422, detail="Invalid phone number format. Must be a valid Iranian phone number.")
         return value
 

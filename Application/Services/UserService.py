@@ -1,12 +1,9 @@
 from fastapi import Request, Response
-from fastapi.responses import RedirectResponse
 from datetime import datetime
 from hashlib import sha256
 from uuid import uuid4
 from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from asyncio import sleep
 
 from Application.Database.repositories import UserRepositories
 from Application.RedisDB.RedisServices import (
@@ -14,7 +11,7 @@ from Application.RedisDB.RedisServices import (
     VcodeServices,
     FpasswordForget,
 )
-from Application.Auth import AESHandler, TokenHandler, BcryptHandler
+from Application.Auth import TokenHandler, BcryptHandler
 from Domain.schemas.UserSchemas import (
     UserCreate,
     VerifyCode,
@@ -23,7 +20,7 @@ from Domain.schemas.UserSchemas import (
     ChangePassword,
     UpdateProfile
 )
-from Domain.Errors.user import PhoneNumberIsExists, EmailIsExists, UserNotFound
+from Domain.Errors.user import PhoneNumberIsExists, UserNotFound, EmptyValues
 from Domain.Errors.auth import (
     NoneCode,
     InvalidCode,
@@ -153,11 +150,15 @@ class UserServices:
         
     @staticmethod    
     async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: uuid4):
-        update = await UserRepositories.update(
-            db = db, user_id = user_id, 
-            values = profile.dict()
-        )
-        if update: return "Your profile has been successfully updated"
+        if info := profile.dict(exclude_unset=True):
+            update = await UserRepositories.update(
+                db = db, user_id = user_id, 
+
+                values = info
+            )
+            if update: return "Your profile has been successfully updated"
+        else:
+            raise EmptyValues
 
     @staticmethod
     async def get_me(db: AsyncSession, user_id: uuid4):

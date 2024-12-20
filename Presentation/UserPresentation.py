@@ -24,7 +24,7 @@ from Domain.schemas.UserSchemas import UpdateProfile
 Router = APIRouter()
 
 
-@Router.post("/sing-UP", status_code = status.HTTP_202_ACCEPTED)
+@Router.post("/sing-up", status_code = status.HTTP_202_ACCEPTED)
 async def Verify_New_User(
 
     response: Response,
@@ -39,7 +39,7 @@ async def Verify_New_User(
     )
 
 
-@Router.post("/singUP", status_code = status.HTTP_201_CREATED)
+@Router.post("/singup", status_code = status.HTTP_201_CREATED)
 async def Create_New_User(
 
     request: Request,
@@ -55,7 +55,7 @@ async def Create_New_User(
     )
 
 
-@Router.post("/singIN", status_code = status.HTTP_202_ACCEPTED)
+@Router.post("/singin", status_code = status.HTTP_202_ACCEPTED)
 async def LoginRequest(
 
     UserData: UserLogin,
@@ -68,7 +68,7 @@ async def LoginRequest(
     )
 
 
-@Router.post("/forget-Pass", status_code = status.HTTP_202_ACCEPTED)
+@Router.post("/forget-pass", status_code = status.HTTP_202_ACCEPTED)
 async def ForgetPassword(
 
     phone: UserPhone,
@@ -80,7 +80,7 @@ async def ForgetPassword(
         db = db, phone = phone, rds = rds
     )
 
-@Router.post("/change-Pass", status_code = status.HTTP_200_OK)
+@Router.post("/change-pass", status_code = status.HTTP_200_OK)
 async def ForgetPassword(
 
     UserData: ChangePassword,
