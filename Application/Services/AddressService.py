@@ -1,4 +1,3 @@
-from fastapi import Request, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.repositories import AddressRepositories
@@ -8,8 +7,19 @@ from Domain.schemas.AddressSchemas import (
 )
 from Domain.Errors.address import (
     AddressLimit,
-    NoAddressWasFound
+    NoAddressWasFound,
+    InvalidProvince
 )
+
+IRANIAN_PROVINCES = [
+    "البرز", "اردبیل", "بوشهر", "چهارمحال و بختیاری",
+    "آذربایجان شرقی", "آذربایجان غربی", "اصفهان", "فارس",
+    "گیلان", "گلستان", "همدان", "هرمزگان", "ایلام", "کرمان",
+    "کرمانشاه", "خراسان جنوبی", "خراسان رضوی", "خراسان شمالی",
+    "خوزستان", "کهگیلویه و بویراحمد", "کردستان", "لرستان",
+    "مرکزی", "مازندران", "قزوین", "قم", "سمنان", 
+    "سیستان و بلوچستان", "تهران", "یزد", "زنجان"
+]
 
 class AddressServices:
     
@@ -17,6 +27,9 @@ class AddressServices:
     async def New_Address(db: AsyncSession, Address: NewAddress, user_id: str):
         if await AddressRepositories.Get_Address_Count(db = db, user_id = user_id) >= 3:
             raise AddressLimit
+        
+        if Address.province not in IRANIAN_PROVINCES:
+            raise InvalidProvince
 
         AddNewAddress = await AddressRepositories.Add_New_Address(
             db = db, NewAddress = Address, user_id = user_id

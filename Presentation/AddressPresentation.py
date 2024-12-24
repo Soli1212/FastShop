@@ -17,7 +17,6 @@ from Domain.schemas.AddressSchemas import AddressID
 from Domain.schemas.AddressSchemas import UpdateAddress
 
 
-
 Router = APIRouter()
 
 

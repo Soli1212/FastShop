@@ -14,3 +14,10 @@ class NoAddressWasFound(HTTPException):
             status_code = status.HTTP_400_BAD_REQUEST,
             detail = "No address was found."
         )
+
+class InvalidProvince(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code = status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail = "Please enter a valid province"
+        )
