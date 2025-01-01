@@ -10,10 +10,10 @@ class Products(BaseModel):
     id = Column(Integer, primary_key=True, autoincrement=True)
 
     name = Column(String(100), nullable=False, index=True)
-    
+
     description = Column(String(500), nullable=False)
     
-    sizes = Column(ARRAY(String), nullable=True)
+    sizes = Column(ARRAY(Integer), nullable=True)
     
     colors = Column(ARRAY(String), nullable=True)
 
@@ -29,6 +29,6 @@ class Products(BaseModel):
     
     lux = Column(Boolean, nullable=False, default=True)
 
-    created_at = Column(String, default = datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
 
     images = relationship("ProductImages", back_populates="product")

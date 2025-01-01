@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from Application.Database import BaseModel
 
@@ -10,8 +10,8 @@ class ProductImages(BaseModel):
     
     url = Column(String, nullable=False)
     
-    product_id = Column(Integer, 
-    
-    ForeignKey("products.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+    product_id = Column(Integer, ForeignKey("products.id", ondelete="CASCADE", onupdate="CASCADE"), nullable=False)
+
+    is_main = Column(Boolean, default=False)
 
     product = relationship("Products", back_populates="images")

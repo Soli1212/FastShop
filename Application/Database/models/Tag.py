@@ -17,9 +17,8 @@ class Tags(BaseModel):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True)
-    
     name = Column(String(50), unique=True, nullable=False)
+    parent_id = Column(Integer, ForeignKey("tags.id", ondelete="CASCADE"), nullable=True)
 
-    parent_id = Column(Integer, ForeignKey("tags.id"), nullable=True)
-    
-    parent = relationship("Tags", remote_side=[id], backref="children")
+    children = relationship("Tags", remote_side=[parent_id])
+    products = relationship("Products", secondary = product_tags)
