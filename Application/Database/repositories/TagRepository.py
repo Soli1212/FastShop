@@ -28,14 +28,11 @@ class TagRepositories:
 
         if f := filters.get("min_price"):
             filters_list.append(Products.price >= int(f))
-
         if f := filters.get("max_price"):
             filters_list.append(Products.price <= int(f))
-
         if f := filters.get("size"):
             size_list = [int(i) for i in f.split("-")]
             filters_list.append(Products.sizes.overlap(size_list))
-
         if f := filters.get("color"):
             color_list = f.split("-")
             filters_list.append(Products.colors.overlap(color_list))
@@ -50,16 +47,18 @@ class TagRepositories:
             .join(product_tags, product_tags.c.product_id == Products.id)
             .outerjoin(ProductImages, and_(
                 ProductImages.product_id == Products.id,
-                ProductImages.is_main == True
+                ProductImages.is_main.is_(True)
             ))
-            .where(product_tags.c.tag_id == tag_id)
             .group_by(Products.id, ProductImages.url)
-        ).limit(limit).offset(offset)
+            .where(*filters_list)
+            .limit(limit)
+            .offset(offset)
+        )
 
-        total_count_query = select(func.count(Products.id)).join(
-            product_tags, product_tags.c.product_id == Products.id
-        ).where(
-            *filters_list
+        total_count_query = (
+            select(func.count(Products.id))
+            .join(product_tags, product_tags.c.product_id == Products.id)
+            .where(*filters_list)
         )
 
         result = await db.execute(base_query)

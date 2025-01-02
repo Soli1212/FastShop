@@ -1,10 +1,4 @@
-from fastapi import Request, Response, HTTPException
-from datetime import datetime
-from hashlib import sha256
-from uuid import uuid4
-from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-
 from Application.Database.repositories import TagRepositories
 from Domain.Errors.Tag import PageNotFound
 
