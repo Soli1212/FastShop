@@ -10,22 +10,20 @@ class TagServices:
 
     @staticmethod
     async def Get_Tag_Products(db: AsyncSession, filters: dict, tag_id: int, limit: int = 2):
-        products = await TagRepositories.Get_Tag_Products(
+        TagProducts = await TagRepositories.Get_Tag_Products(
             db = db, tag_id = tag_id,
             filters = filters, limit = limit
         )
 
-        if not products[0]:
+        if not TagProducts[0]:
             raise PageNotFound
 
-        total_pages = (products[1] + limit - 1) // limit
-
         products = [
-            {"id": id, "name": name, "price": price, "images": images or None}
-            for id, name, price, images in products[0]
+            {"id": id, "name": name, "price": price, "discounted_price":discounted_price, "images": images or None}
+            for id, name, price, discounted_price, images in TagProducts[0]
         ]
 
         return {
-            "total_pages": total_pages,
+            "next_page": TagProducts[1],
             "products": products
         }

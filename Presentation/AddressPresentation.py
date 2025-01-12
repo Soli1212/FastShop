@@ -10,8 +10,6 @@ from Application.Services import AddressServices
 
 from Application.Auth import Authorize
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from Domain.schemas.AddressSchemas import NewAddress
 from Domain.schemas.AddressSchemas import AddressID
 from Domain.schemas.AddressSchemas import UpdateAddress

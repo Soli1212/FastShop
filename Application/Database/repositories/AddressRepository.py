@@ -39,7 +39,7 @@ class AddressRepositories:
         ).returning(Addresses.id)
 
         result = await db.execute(query)
-        return result.scalar()
+        return result.scalar_one_or_none()
     
 
     @staticmethod
@@ -51,6 +51,7 @@ class AddressRepositories:
         result = await db.execute(query)
         return result.scalars().first()
     
+
     @staticmethod
     async def Get_My_Addresses(db: AsyncSession, user_id: str):
         query = select(Addresses).where(Addresses.user_id == user_id)

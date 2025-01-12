@@ -86,7 +86,6 @@ class UserServices:
     @staticmethod
     async def login(db: AsyncSession, response: Response, UserData: UserLogin):
         if user := await UserRepositories.Login(db=db, phone=UserData.phone):
-
             if not BcryptHandler.check(password=UserData.password, hashed_password = user[1]): 
                 raise InformationMismatch
 
@@ -153,7 +152,6 @@ class UserServices:
         if info := profile.dict(exclude_unset=True):
             update = await UserRepositories.update(
                 db = db, user_id = user_id, 
-
                 values = info
             )
             if update: return "Your profile has been successfully updated"
@@ -164,10 +162,9 @@ class UserServices:
     async def get_me(db: AsyncSession, user_id: uuid4):
         if user := await UserRepositories.Get_User_By_ID(db=db, user_id = user_id):
             return {
-                "id": user.id,
-                "phone": user.phone,
-                "fullname": user.fullname,
-                "email": user.email,
+                "phone": user[0],
+                "fullname": user[1],
+                "email": user[2],
             }
 
     @staticmethod

@@ -15,11 +15,8 @@ class UserRepositories:
     async def Create_User(db: AsyncSession, NewUserData: UserCreate):
         "add new user"
         NewUser = Users(**NewUserData.dict(exclude_unset=True))
-        db.add(instance = NewUser)
-        
+        db.add(NewUser)
         await db.commit()
-        await db.flush()
-        
         return NewUser.id
 
     @staticmethod
@@ -31,16 +28,16 @@ class UserRepositories:
     @staticmethod
     async def Login(db: AsyncSession, phone: str):
         "get user by phone"
-        query = query = select(Users.id, Users.password).where(Users.phone == phone)
+        query = select(Users.id, Users.password).where(Users.phone == phone)
         result = await db.execute(query)
-        return result.fetchone()
+        return result.first()
 
     @staticmethod
     async def Get_User_By_ID(db: AsyncSession, user_id: uuid4):
         "get user by id"
-        query = select(Users.id, Users.phone, Users.fullname, Users.email).where(Users.id == user_id)
+        query = select(Users.phone, Users.fullname, Users.email).where(Users.id == user_id)
         result = await db.execute(query)
-        return result.fetchone()
+        return result.first()
     
     @staticmethod
     async def Get_User_By_Phone(db: AsyncSession, phone: str):
@@ -67,4 +64,3 @@ class UserRepositories:
         query = select(exists().where(Users.email == email))
         result = await db.execute(query)
         return result.scalar()
-    

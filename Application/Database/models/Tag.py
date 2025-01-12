@@ -21,4 +21,4 @@ class Tags(BaseModel):
     parent_id = Column(Integer, ForeignKey("tags.id", ondelete="CASCADE"), nullable=True)
 
     children = relationship("Tags", remote_side=[parent_id])
-    products = relationship("Products", secondary = product_tags)
+    products = relationship("Products", secondary = product_tags, back_populates = "tags")

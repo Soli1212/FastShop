@@ -1,15 +1,16 @@
 from fastapi import FastAPI, Request, Depends, Path, Query
 from fastapi.responses import RedirectResponse
+
 from Application.Database.connection import init_db
 from Application.RedisDB.connection import RedisConnection
+
 from Presentation import UserRouter
 from Presentation import AddressRouter
 from Presentation import TagRouter
+from Presentation import ProductRouter
 
 from Application.Database import get_db
 from sqlalchemy.ext.asyncio import AsyncSession
-
-from Application.Database.repositories.TagRepository import TagRepositories
 
 
 from typing import Optional
@@ -29,6 +30,7 @@ async def shutdown_event():
 app.include_router(router=UserRouter, prefix="/user")
 app.include_router(router=AddressRouter, prefix="/address")
 app.include_router(router=TagRouter, prefix="/tags")
+app.include_router(router=ProductRouter, prefix="/products")
 
 # Middlewares --------------------------
 @app.middleware("http")
@@ -48,3 +50,10 @@ async def add_process_time_header(request: Request, call_next):
     return await call_next(request)
 
 # Root Endpoint ------------------------
+
+
+@app.get("/")
+async def pr(db: AsyncSession = Depends(get_db)):
+    return "hi 😃"
+
+

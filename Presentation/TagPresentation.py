@@ -8,13 +8,8 @@ from typing import Optional
 from Application.Database import get_db
 from Application.Services import TagServices
 
-from Application.Auth import Authorize
-
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Domain.schemas.AddressSchemas import NewAddress
-from Domain.schemas.AddressSchemas import AddressID
-from Domain.schemas.AddressSchemas import UpdateAddress
 
 
 Router = APIRouter()

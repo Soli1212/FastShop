@@ -4,6 +4,7 @@ from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
+from .Tag import product_tags
 class Products(BaseModel):
     __tablename__ = "products"
 
@@ -32,3 +33,4 @@ class Products(BaseModel):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     images = relationship("ProductImages", back_populates="product")
+    tags = relationship("Tags", secondary=product_tags, back_populates = "products")

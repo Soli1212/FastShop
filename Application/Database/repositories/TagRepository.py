@@ -7,6 +7,7 @@ from sqlalchemy.orm import joinedload
 from sqlalchemy.sql import func
 from sqlalchemy import and_
 
+from typing import Tuple
 
 class TagRepositories:
     
@@ -18,9 +19,8 @@ class TagRepositories:
         result = await db.execute(query)
         return result.unique().scalars().all()
     
-
     @staticmethod
-    async def Get_Tag_Products(db: AsyncSession, tag_id: int, filters: dict, limit: int):
+    async def Get_Tag_Products(db: AsyncSession, tag_id: int, filters: dict, limit: int) -> Tuple[list, bool]:
         page = int(filters.get("page", 0))
         offset = page * limit
 
@@ -37,11 +37,12 @@ class TagRepositories:
             color_list = f.split("-")
             filters_list.append(Products.colors.overlap(color_list))
 
-        base_query = (
+        query = (
             select(
                 Products.id,
                 Products.name,
                 Products.price,
+                Products.discounted_price,
                 ProductImages.url
             )
             .join(product_tags, product_tags.c.product_id == Products.id)
@@ -49,22 +50,18 @@ class TagRepositories:
                 ProductImages.product_id == Products.id,
                 ProductImages.is_main.is_(True)
             ))
-            .group_by(Products.id, ProductImages.url)
+
             .where(*filters_list)
-            .limit(limit)
+            .limit(limit + 1)
             .offset(offset)
         )
 
-        total_count_query = (
-            select(func.count(Products.id))
-            .join(product_tags, product_tags.c.product_id == Products.id)
-            .where(*filters_list)
-        )
+        result = await db.execute(query)
+        products = result.all()
 
-        result = await db.execute(base_query)
-        data = result.fetchall()
 
-        total_count_result = await db.execute(total_count_query)
-        total_count = total_count_result.scalar_one()
+        has_next = len(products) > limit
+        if has_next:
+            products = products[:-1]
 
-        return (data, total_count)
+        return (products, has_next)
