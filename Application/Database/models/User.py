@@ -24,3 +24,4 @@ class Users(BaseModel):
     
     Addresses = relationship("Addresses", back_populates = "user")
     orders = relationship("Orders", back_populates="user")
+    Cart = relationship("CartItems", back_populates = "User")

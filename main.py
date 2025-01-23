@@ -1,5 +1,7 @@
-from fastapi import FastAPI, Request, Depends, Path, Query
+from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse
 
 from Application.Database.connection import init_db
 from Application.RedisDB.connection import RedisConnection
@@ -9,8 +11,6 @@ from Presentation import AddressRouter
 from Presentation import TagRouter
 from Presentation import ProductRouter
 
-from Application.Database import get_db
-from sqlalchemy.ext.asyncio import AsyncSession
 
 
 from typing import Optional
@@ -49,11 +49,15 @@ async def add_process_time_header(request: Request, call_next):
 
     return await call_next(request)
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 # Root Endpoint ------------------------
 
-
 @app.get("/")
-async def pr(db: AsyncSession = Depends(get_db)):
-    return "hi 😃"
-
-
+async def serve_html():
+    return "👌"

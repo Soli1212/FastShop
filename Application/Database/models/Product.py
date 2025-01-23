@@ -24,7 +24,7 @@ class Products(BaseModel):
     
     discounted_price = Column(Integer, nullable=True)
     
-    inventory = Column(Boolean, nullable=False, default=True)
+    inventory = Column(Integer, nullable=False, default = 1)
     
     new = Column(Boolean, nullable=False, default=True)
     

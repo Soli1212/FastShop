@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, Float
+from sqlalchemy import Column, Integer, ForeignKey, Float, String
 from sqlalchemy.orm import relationship
 from Application.Database import BaseModel
 
@@ -10,6 +10,9 @@ class OrderItems(BaseModel):
     order_id = Column(Integer, ForeignKey("orders.id", ondelete="CASCADE"), nullable=False)
     
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
+
+    size = Column(Integer, nullable=True)
+    color = Column(String, nullable=True)
 
     quantity = Column(Integer, default=1, nullable=False)
 
