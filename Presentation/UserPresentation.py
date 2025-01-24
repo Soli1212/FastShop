@@ -12,8 +12,7 @@ from Application.Auth import Authorize
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Domain.schemas.UserSchemas import UserCreate
-from Domain.schemas.UserSchemas import VerifyCode
+from Domain.schemas.UserSchemas import VerifyData
 from Domain.schemas.UserSchemas import UserLogin
 from Domain.schemas.UserSchemas import UserPhone
 from Domain.schemas.UserSchemas import ChangePassword
@@ -28,7 +27,7 @@ Router = APIRouter()
 async def Verify_New_User(
 
     response: Response,
-    NewUserData: UserCreate,
+    NewUserData: UserPhone,
     db: AsyncSession = Depends(get_db),
     rds: RedisConnection.get_client = Depends()
 
@@ -41,17 +40,14 @@ async def Verify_New_User(
 
 @Router.post("/singup", status_code = status.HTTP_201_CREATED)
 async def Create_New_User(
-
-    request: Request,
     response: Response,
-    VerifyData: VerifyCode,
+    VerifyData: VerifyData,
     db: AsyncSession = Depends(get_db),
     rds: RedisConnection.get_client = Depends()
 
 ):
     return await UserServices.singin(
-        db = db, rds = rds, request = request, 
-        response = response, VerifyData = VerifyData
+        db = db, rds = rds, response = response, VerifyData = VerifyData
     )
 
 

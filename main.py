@@ -36,9 +36,9 @@ app.include_router(router=ProductRouter, prefix="/products")
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
     LogoutDepends = [
-        "/user/sing-UP", "/user/singUP",
-        "/user/singIN", "/user/forget-Pass",
-        "/user/forget-Pass", "/user/change-Pass",
+        "/user/sing-up", "/user/singup",
+        "/user/singin", "/user/forget-pass",
+        "/user/forget-Pass", "/user/change-pass",
     ]
     if request.url.path in LogoutDepends:
         access_token = request.cookies.get("AccessToken", None)

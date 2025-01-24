@@ -6,15 +6,14 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.sql import exists
 
-from Domain.schemas.UserSchemas import UserCreate
 
 
 class UserRepositories:
 
     @staticmethod
-    async def Create_User(db: AsyncSession, NewUserData: UserCreate):
+    async def Create_User(db: AsyncSession, UserPhone: str, UserPassword: str):
         "add new user"
-        NewUser = Users(**NewUserData.dict(exclude_unset=True))
+        NewUser = Users(phone = UserPhone, password = UserPassword)
         db.add(NewUser)
         await db.commit()
         return NewUser.id
