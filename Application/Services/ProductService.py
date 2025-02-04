@@ -1,89 +1,44 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Application.Database.repositories import ProductRepositories
-from Domain.Errors.Product import (
-    PageNotFound
-)
+from Application.Database.models import Products
+from Application.Database.repositories import ProductRepository
+from Domain.Errors.Product import PageNotFound
 
 
-class ProductServices:
-    
-    @staticmethod
-    async def load_product(db: AsyncSession, product_id: int):
-        if product := await ProductRepositories.Load_Product(
-            db = db, product_id = product_id
-        ):
-            result = {
-                "id": product.id,
-                "name": product.name,
-                "price": product.price,
-                "discounted_price": product.discounted_price,
-                "description": product.description,
-                "colors": product.colors,
-                "sizes": product.sizes,
-                "images": product.images or None,
-                "tags": product.tags or None,
-                "lux": product.lux,
-                "new": product.new,
-                "inventory": product.inventory,
-                "dimensions": product.dimensions,
-            }
-            return result
+async def load_product(db: AsyncSession, product_id: int):
+    if product := await ProductRepository.load_product(db=db, product_id=product_id):
+        return product
+    raise PageNotFound
+
+
+async def lux_products(db: AsyncSession, offset: int, limit: int = 2):
+    lux_products = await ProductRepository.load_filter_products(
+        db=db, limit=limit, offset=offset, filter=Products.lux == True
+    )
+
+    if not lux_products[0]:
         raise PageNotFound
-    
-    @staticmethod
-    async def lux_products(db: AsyncSession, offset: int, limit: int = 2):
-        LuxProducts = await ProductRepositories.Load_Lux_Products(
-            db = db, limit = limit, offset = offset
-        )
 
-        if not LuxProducts[0]:
-            raise PageNotFound
+    return {"next_page": lux_products[1], "products": lux_products[0]}
 
-        result = [
-            {"id": id, "name": name, "price": price, "discounted_price": discounted_price, "image": images or None}
-            for id, name, price, discounted_price, images in LuxProducts[0]
-        ]
 
-        return {
-            "next_page": LuxProducts[1],
-            "products": result
-        }
+async def new_products(db: AsyncSession, offset: int, limit: int = 2):
+    new_products = await ProductRepository.load_filter_products(
+        db=db, limit=limit, offset=offset, filter=Products.new == True
+    )
 
-    @staticmethod
-    async def new_products(db: AsyncSession, offset: int, limit: int = 2):
-        NewProducts = await ProductRepositories.Load_New_Products(
-            db = db, limit = limit, offset = offset
-        )
+    if not new_products[0]:
+        raise PageNotFound
 
-        if not NewProducts[0]:
-            raise PageNotFound
+    return {"next_page": new_products[1], "products": new_products[0]}
 
-        result = [
-            {"id": id, "name": name, "price": price, "discounted_price": discounted_price, "image": images or None}
-            for id, name, price, discounted_price, images in NewProducts[0]
-        ]
 
-        return {
-            "next_page": NewProducts[1],
-            "products": result
-        }
-    
-    @staticmethod
-    async def discounted_products(db: AsyncSession, offset: int, limit: int = 2):
-        DiscountedProducts = await ProductRepositories.Load_discounted_Products(
-            db = db, limit = limit, offset = offset
-        )
+async def discounted_products(db: AsyncSession, offset: int, limit: int = 2):
+    discounted_products = await ProductRepository.load_filter_products(
+        db=db, limit=limit, offset=offset, filter=Products.discounted_price > 0
+    )
 
-        if not DiscountedProducts[0]:
-            raise PageNotFound
+    if not discounted_products[0]:
+        raise PageNotFound
 
-        result = [
-            {"id": id, "name": name, "price": price, "discounted_price": discounted_price, "image": images or None}
-            for id, name, price, discounted_price, images in DiscountedProducts[0]
-        ]
-
-        return {
-            "next_page": DiscountedProducts[1],
-            "products": result
-        }
+    return {"next_page": discounted_products[1], "products": discounted_products[0]}

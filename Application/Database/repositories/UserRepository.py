@@ -1,65 +1,69 @@
-from Application.Database.models import Users
 from uuid import uuid4
 
 from sqlalchemy import update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
+from sqlalchemy.orm import load_only
 from sqlalchemy.sql import exists
 
+from Application.Database.models import Users
 
 
-class UserRepositories:
+async def create_user(db: AsyncSession, user_phone: str, user_password: str):
+    """Add new user"""
+    new_user = Users(phone=user_phone, password=user_password)
+    db.add(new_user)
+    await db.flush()
+    return new_user.id
 
-    @staticmethod
-    async def Create_User(db: AsyncSession, UserPhone: str, UserPassword: str):
-        "add new user"
-        NewUser = Users(phone = UserPhone, password = UserPassword)
-        db.add(NewUser)
-        await db.commit()
-        return NewUser.id
 
-    @staticmethod
-    async def update(db: AsyncSession, user_id: uuid4, values: dict):
-        query = update(Users).where(Users.id == user_id).values(**values)
-        result = await db.execute(query)
-        return result
+async def update_profile(db: AsyncSession, user_id: uuid4, values: dict):
+    query = update(Users).where(Users.id == user_id).values(**values)
+    result = await db.execute(query)
+    return result
 
-    @staticmethod
-    async def Login(db: AsyncSession, phone: str):
-        "get user by phone"
-        query = select(Users.id, Users.password).where(Users.phone == phone)
-        result = await db.execute(query)
-        return result.first()
 
-    @staticmethod
-    async def Get_User_By_ID(db: AsyncSession, user_id: uuid4):
-        "get user by id"
-        query = select(Users.phone, Users.fullname, Users.email).where(Users.id == user_id)
-        result = await db.execute(query)
-        return result.first()
-    
-    @staticmethod
-    async def Get_User_By_Phone(db: AsyncSession, phone: str):
-        query = select(Users).where(Users.phone == phone)
-        result = await db.execute(query)
-        return result.scalars().first()
-    
-    @staticmethod
-    async def Get_User_Last_Password_Change(db: AsyncSession, user_id: uuid4):
-        query = select(Users.last_password_change).where(Users.id == user_id)
-        result = await db.execute(query)
-        return result.scalars().first()
+async def login(db: AsyncSession, phone: str):
+    """Get user by phone"""
+    query = select(Users.id, Users.password).where(Users.phone == phone)
+    result = await db.execute(query)
+    return result.mappings().first()
 
-    @staticmethod
-    async def Check_Exists_Phone(db: AsyncSession, phone: str) -> bool: 
-        "Checking the existence of a phone number" 
-        query = select(exists().where(Users.phone == phone))
-        result = await db.execute(query)
-        return result.scalar()
-    
-    @staticmethod
-    async def Check_Exists_Email(db: AsyncSession, email: str):
-        "Checking the existence of email"
-        query = select(exists().where(Users.email == email))
-        result = await db.execute(query)
-        return result.scalar()
+
+async def get_user_by_id(db: AsyncSession, user_id: uuid4):
+    """Get user by ID"""
+    query = select(Users.id, Users.phone, Users.fullname, Users.email).where(
+        Users.id == user_id
+    )
+    result = await db.execute(query)
+    return result.mappings().first()
+
+
+async def get_user_by_phone(db: AsyncSession, phone: str):
+    query = (
+        select(Users)
+        .options(load_only(Users.id, Users.password, Users.last_password_change))
+        .where(Users.phone == phone)
+    )
+    result = await db.execute(query)
+    return result.scalars().first()
+
+
+async def get_user_last_password_change(db: AsyncSession, user_id: uuid4):
+    query = select(Users.last_password_change).where(Users.id == user_id)
+    result = await db.execute(query)
+    return result.mappings().first()
+
+
+async def check_exists_phone(db: AsyncSession, phone: str) -> bool:
+    """Check the existence of a phone number"""
+    query = select(exists().where(Users.phone == phone))
+    result = await db.execute(query)
+    return result.scalar()
+
+
+async def check_exists_email(db: AsyncSession, email: str):
+    """Check the existence of an email"""
+    query = select(exists().where(Users.email == email))
+    result = await db.execute(query)
+    return result.scalar()

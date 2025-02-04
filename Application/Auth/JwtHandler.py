@@ -1,69 +1,53 @@
-from jwt import encode
-from jwt import decode
-
-from json import loads
 from base64 import b64decode
-
-from datetime import datetime
-from datetime import timedelta
-
-
-from dotenv import load_dotenv
+from datetime import datetime, timedelta
+from json import loads
 from os import getenv
 
+from dotenv import load_dotenv
+from jwt import decode, encode
+
 from Domain.Errors.auth import LoginAgain
-
-
 
 load_dotenv()
 ACCESS_TOKEN_KEY = getenv("ACCESS_TOKEN_KEY")
 REFRESH_TOKEN_KEY = getenv("REFRESH_TOKEN_KEY")
 
-class TokenHandler:
 
-    @staticmethod
-    def New_Access_Token(payload: dict, exp: int = 15) -> str:
-        payload["exp"] = datetime.utcnow() + timedelta(minutes = exp)
-        payload["iat"] = (datetime.utcnow() + timedelta(seconds = 1)).timestamp()
-        token = encode(payload = payload, key = ACCESS_TOKEN_KEY, algorithm = "HS256")
-        print(datetime.utcnow())
-        return token
+def new_access_token(payload: dict, exp: int = 15) -> str:
+    """Generate a new access token with expiration time."""
+    payload["exp"] = datetime.utcnow() + timedelta(minutes=exp)
+    payload["iat"] = (datetime.utcnow() + timedelta(seconds=1)).timestamp()
+    return encode(payload=payload, key=ACCESS_TOKEN_KEY, algorithm="HS256")
 
 
-    @staticmethod
-    def New_Refresh_Token(payload: dict, exp: int = 7) -> str:
-        payload["exp"] = datetime.utcnow() + timedelta(days = exp)
-        payload["iat"] = (datetime.utcnow() + timedelta(seconds = 1)).timestamp()
-        token = encode(payload = payload, key = REFRESH_TOKEN_KEY, algorithm = "HS256")
-        return token
+def new_refresh_token(payload: dict, exp: int = 7) -> str:
+    """Generate a new refresh token with expiration time."""
+    payload["exp"] = datetime.utcnow() + timedelta(days=exp)
+    payload["iat"] = (datetime.utcnow() + timedelta(seconds=1)).timestamp()
+    return encode(payload=payload, key=REFRESH_TOKEN_KEY, algorithm="HS256")
 
 
-    @staticmethod
-    def Verify_Access_Token(token: str) -> dict:
-        try:
-            DecodedToken = decode(jwt = token, key = ACCESS_TOKEN_KEY, algorithms = "HS256")
-            return DecodedToken
-        except:
-            return False
+def verify_access_token(token: str) -> dict:
+    """Verify and decode the access token."""
+    try:
+        return decode(jwt=token, key=ACCESS_TOKEN_KEY, algorithms=["HS256"])
+    except Exception:
+        return False
 
-    @staticmethod
-    def Verify_Refresh_Token(token: str) -> dict:
-        try:
-            DecodedToken = decode(jwt = token, key = REFRESH_TOKEN_KEY, algorithms = "HS256")
-            return DecodedToken
-        except:
-            raise LoginAgain
-        
-    @staticmethod
-    def get_token_exp_as_secounds(token: str):
-        payload = token.split(".")[1]
-        payload = b64decode(payload + "==").decode("utf-8")
-        payload = loads(payload)
-        exp_time = datetime.utcfromtimestamp(payload['exp'])
-        current_time = datetime.utcnow()
-        remaining_time = exp_time - current_time
-        remaining_seconds  = remaining_time.total_seconds()
-        if remaining_seconds> 0:
-            return int(remaining_seconds)
-        else:
-            return None
+
+def verify_refresh_token(token: str) -> dict:
+    """Verify and decode the refresh token."""
+    try:
+        return decode(jwt=token, key=REFRESH_TOKEN_KEY, algorithms=["HS256"])
+    except Exception:
+        raise LoginAgain
+
+
+def get_token_exp_as_seconds(token: str) -> int:
+    """Extract expiration time from token and return remaining seconds."""
+    payload_part = token.split(".")[1]
+    decoded_payload = b64decode(payload_part + "==").decode("utf-8")
+    payload = loads(decoded_payload)
+    exp_time = datetime.utcfromtimestamp(payload["exp"])
+    remaining_seconds = (exp_time - datetime.utcnow()).total_seconds()
+    return int(remaining_seconds) if remaining_seconds > 0 else None

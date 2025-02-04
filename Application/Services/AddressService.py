@@ -1,71 +1,80 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Application.Database.repositories import AddressRepositories
-from Domain.schemas.AddressSchemas import (
-    NewAddress,
-    UpdateAddress
-)
-from Domain.Errors.address import (
-    AddressLimit,
-    NoAddressWasFound,
-    InvalidProvince
-)
+from Application.Database.repositories import AddressRepository
+from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound
+from Domain.schemas.AddressSchemas import NewAddress, UpdateAddress
 
 IRANIAN_PROVINCES = [
-    "البرز", "اردبیل", "بوشهر", "چهارمحال و بختیاری",
-    "آذربایجان شرقی", "آذربایجان غربی", "اصفهان", "فارس",
-    "گیلان", "گلستان", "همدان", "هرمزگان", "ایلام", "کرمان",
-    "کرمانشاه", "خراسان جنوبی", "خراسان رضوی", "خراسان شمالی",
-    "خوزستان", "کهگیلویه و بویراحمد", "کردستان", "لرستان",
-    "مرکزی", "مازندران", "قزوین", "قم", "سمنان", 
-    "سیستان و بلوچستان", "تهران", "یزد", "زنجان"
+    "البرز",
+    "اردبیل",
+    "بوشهر",
+    "چهارمحال و بختیاری",
+    "آذربایجان شرقی",
+    "آذربایجان غربی",
+    "اصفهان",
+    "فارس",
+    "گیلان",
+    "گلستان",
+    "همدان",
+    "هرمزگان",
+    "ایلام",
+    "کرمان",
+    "کرمانشاه",
+    "خراسان جنوبی",
+    "خراسان رضوی",
+    "خراسان شمالی",
+    "خوزستان",
+    "کهگیلویه و بویراحمد",
+    "کردستان",
+    "لرستان",
+    "مرکزی",
+    "مازندران",
+    "قزوین",
+    "قم",
+    "سمنان",
+    "سیستان و بلوچستان",
+    "تهران",
+    "یزد",
+    "زنجان",
 ]
 
-class AddressServices:
-    
-    @staticmethod
-    async def New_Address(db: AsyncSession, Address: NewAddress, user_id: str):
-        if await AddressRepositories.Get_Address_Count(db = db, user_id = user_id) >= 3:
-            raise AddressLimit
-        
-        if Address.province not in IRANIAN_PROVINCES:
-            raise InvalidProvince
 
-        AddNewAddress = await AddressRepositories.Add_New_Address(
-            db = db, NewAddress = Address, user_id = user_id
-        )
+async def new_address(db: AsyncSession, address: NewAddress, user_id: str):
+    if await AddressRepository.get_address_count(db=db, user_id=user_id) >= 3:
+        raise AddressLimit
 
-        if AddNewAddress:
-            return "The address has been successfully registered"
-        
+    if address.province not in IRANIAN_PROVINCES:
+        raise InvalidProvince
 
-    @staticmethod
-    async def Delete_Address(db: AsyncSession, user_id: str, address_id: int):
+    added_address = await AddressRepository.add_new_address(
+        db=db, new_address=address, user_id=user_id
+    )
 
-        if await AddressRepositories.Delete_Address(
-            db = db, address_id = address_id, user_id = user_id
-        ):
-            return "The address has been successfully deleted."
-        else:
-            raise NoAddressWasFound
-        
-
-    @staticmethod
-    async def Update_Address(db: AsyncSession, user_id: str, address_id: int, UAddress: UpdateAddress):
-        if address := await AddressRepositories.Get_Address(db = db, address_id = address_id, user_id = user_id):
-
-            for name, value in UAddress.dict(exclude_unset=True).items():
-                setattr(address, name, value)
-
-            return address
-        else:
-            raise NoAddressWasFound
-    
-    @staticmethod
-    async def My_addresses(db: AsyncSession, user_id: int):
-        return await AddressRepositories.Get_My_Addresses(db, user_id = user_id)
+    if added_address:
+        return "The address has been successfully registered."
 
 
+async def delete_address(db: AsyncSession, user_id: str, address_id: int):
+    if await AddressRepository.delete_address(
+        db=db, address_id=address_id, user_id=user_id
+    ):
+        return "The address has been successfully deleted."
+    else:
+        raise NoAddressWasFound
 
 
-    
+async def update_address(
+    db: AsyncSession, user_id: str, address_id: int, uaddress: UpdateAddress
+):
+    if address := await AddressRepository.get_address(
+        db=db, address_id=address_id, user_id=user_id
+    ):
+        for name, value in uaddress.dict(exclude_unset=True).items():
+            setattr(address, name, value)
+        return address
+    else:
+        raise NoAddressWasFound
+
+
+async def my_addresses(db: AsyncSession, user_id: int):
+    return await AddressRepository.get_my_addresses(db, user_id=user_id)

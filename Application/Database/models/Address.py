@@ -1,13 +1,20 @@
-from Application.Database import BaseModel
-from sqlalchemy import Column, Integer, String, ForeignKey, UUID
+from sqlalchemy import UUID, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
+
+from Application.Database import BaseModel
+
 
 class Addresses(BaseModel):
     __tablename__ = "addresses"
-    
+
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
-    
-    user_id = Column(UUID(as_uuid=True), ForeignKey('users.id', ondelete = "Cascade", onupdate = "Cascade"), nullable=False)
+
+    user_id = Column(
+        UUID(as_uuid=True),
+        ForeignKey("users.id", ondelete="Cascade", onupdate="Cascade"),
+        nullable=False,
+        index=True,
+    )
 
     province = Column(String(100), nullable=False)
 
@@ -19,7 +26,7 @@ class Addresses(BaseModel):
 
     recipient_phone = Column(String(11), nullable=False)
 
-    full_address = Column(String, nullable=False) 
+    full_address = Column(String, nullable=False)
 
-    user = relationship("Users", back_populates = "Addresses")
-    orders = relationship("Orders", back_populates = "address")
+    user = relationship("Users", back_populates="Addresses")
+    orders = relationship("Orders", back_populates="address")

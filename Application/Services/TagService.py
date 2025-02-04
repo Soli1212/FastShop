@@ -1,29 +1,41 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from Application.Database.repositories import TagRepositories
+
+from Application.Database.models import Products, product_tags
+from Application.Database.repositories import TagRepository
 from Domain.Errors.Tag import PageNotFound
 
 
-class TagServices:
-    @staticmethod
-    async def Get_Tags(db: AsyncSession):
-        return await TagRepositories.Get_Tags(db = db)
+async def get_tags(db: AsyncSession):
+    return await TagRepository.get_tags(db=db)
 
-    @staticmethod
-    async def Get_Tag_Products(db: AsyncSession, filters: dict, tag_id: int, limit: int = 2):
-        TagProducts = await TagRepositories.Get_Tag_Products(
-            db = db, tag_id = tag_id,
-            filters = filters, limit = limit
-        )
 
-        if not TagProducts[0]:
-            raise PageNotFound
+async def get_tag_products(
+    db: AsyncSession, filters: dict, tag_id: int, limit: int = 2
+):
+    filters_list = [product_tags.c.tag_id == tag_id]
 
-        products = [
-            {"id": id, "name": name, "price": price, "discounted_price":discounted_price, "images": images or None}
-            for id, name, price, discounted_price, images in TagProducts[0]
-        ]
+    if min_price := filters.get("min_price"):
+        filters_list.append(Products.price >= int(min_price))
 
-        return {
-            "next_page": TagProducts[1],
-            "products": products
-        }
+    if max_price := filters.get("max_price"):
+        filters_list.append(Products.price <= int(max_price))
+
+    if size := filters.get("size"):
+        size_list = [int(i) for i in size.split("-")]
+        filters_list.append(Products.sizes.overlap(size_list))
+
+    if color := filters.get("color"):
+        color_list = color.split("-")
+        filters_list.append(Products.colors.overlap(color_list))
+
+    tag_products = await TagRepository.get_tag_products(
+        db=db, filters_list=filters_list, limit=limit, page=int(filters.get("page", 0))
+    )
+
+    if not tag_products[0]:
+        raise PageNotFound
+
+    return {
+        "next_page": tag_products[1],
+        "products": tag_products[0],
+    }
