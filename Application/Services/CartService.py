@@ -4,12 +4,13 @@ from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.repositories import ProductRepository
+from utils import json_response
 from Application.RedisDB.RedisServices import CartItemService
 from Domain.Errors.Cart import NonExistent
 from Domain.schemas.Cart import CartItem, DeleteItem
 
 
-async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: int):
+async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUID):
     product_inventory = await ProductRepository.variant_exists(
         db=db,
         product_id=item.product_id,
@@ -21,17 +22,19 @@ async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: int
     if not product_inventory:
         raise NonExistent
 
-    return await CartItemService.add_or_update_cart(rds=rds, item=item, user_id=user_id)
+    if await CartItemService.add_or_update_cart(rds=rds, item=item, user_id=user_id):
+        return await get_cart(db = db, rds = rds, user_id = user_id)
 
 
-async def delete_product(rds: Redis, user_id: UUID, item: DeleteItem):
-    return await CartItemService.remove_cart_item(rds=rds, user_id=user_id, item=item)
+async def delete_product(db: AsyncSession, rds: Redis, user_id: UUID, item: DeleteItem):
+    if await CartItemService.remove_cart_item(rds=rds, user_id=user_id, item=item):
+        return await get_cart(db = db, rds = rds, user_id = user_id)
 
 
 async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID):
     cart_items = await CartItemService.get_cart_items(rds=rds, user_id=user_id)
     if not cart_items:
-        return "Your cart is empty"
+        return json_response(msg = "Your cart is empty")
 
     product_ids = list({int(item["product_id"]) for item in cart_items})
     products = await ProductRepository.get_products_list(
@@ -53,11 +56,11 @@ async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID):
         discounted_price = product.get("discounted_price")
         quantity = item["quantity"]
 
-        finall_price = discounted_price if discounted_price else original_price
-        item_discount = (original_price - finall_price) * quantity
+        final_price = discounted_price if discounted_price else original_price
+        item_discount = (original_price - final_price) * quantity
         total_discount += item_discount
 
-        finall_price *= quantity
+        final_price *= quantity
 
         formatted_item = {
             "product_id": product_id,
@@ -65,12 +68,12 @@ async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID):
             "quantity": quantity,
             "price": original_price,
             "discounted_price": discounted_price or 0,
-            "total_price": finall_price,
+            "total_price": final_price,
             "color": item.get("color"),
             "size": item.get("size"),
         }
         formatted_cart.append(formatted_item)
-        total_cart += finall_price
+        total_cart += final_price
 
     return {
         "cart_items": formatted_cart,

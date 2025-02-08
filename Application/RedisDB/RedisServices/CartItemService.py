@@ -17,7 +17,7 @@ async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):
         existing_item = loads(existing_data)
         existing_item["quantity"] = item.quantity
         await rds.hset(key, field, dumps(existing_item))
-        return "The quantity of the product in your cart has been updated."
+        return True
     else:
         new_item = {
             "product_id": str(item.product_id),
@@ -31,7 +31,7 @@ async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):
     if ttl == -1 or ttl == -2:
         await rds.expire(key, 86400)  # Set expiration to 24 hours
 
-    return "The product has been added to your cart."
+    return True
 
 
 async def remove_cart_item(rds: Redis, user_id: UUID, item: DeleteItem):
@@ -44,7 +44,7 @@ async def remove_cart_item(rds: Redis, user_id: UUID, item: DeleteItem):
         raise ProductNotFound
 
     await rds.hdel(key, field)
-    return "Product removed from cart."
+    return True
 
 
 async def get_cart_items(rds: Redis, user_id: UUID):

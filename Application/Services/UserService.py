@@ -1,6 +1,6 @@
 from datetime import datetime
 from hashlib import sha256
-from uuid import uuid4
+from uuid import UUID
 
 from aioredis import Redis
 from fastapi import Request, Response
@@ -19,6 +19,7 @@ from Domain.schemas.UserSchemas import (
     VerifyData,
 )
 from utils import delete_cookie, set_cookie
+from utils import json_response
 
 
 async def sing_up(db: AsyncSession, rds: Redis, NewUserData: UserPhone):
@@ -26,7 +27,7 @@ async def sing_up(db: AsyncSession, rds: Redis, NewUserData: UserPhone):
         raise PhoneNumberIsExists
 
     code = await VcodeService.new_verification_code(rds=rds, user=NewUserData)
-    return code  # send code via SMS
+    return json_response(msg = code, key="code")  # send code via SMS
 
 
 async def singup(
@@ -55,7 +56,7 @@ async def singup(
         set_cookie(response=response, key="AccessToken", value=access_token)
         set_cookie(response=response, key="RefreshToken", value=refresh_token)
 
-        return "welcome"
+        return json_response(msg = "welcome")
 
 
 async def login(db: AsyncSession, response: Response, UserData: UserLogin):
@@ -72,15 +73,14 @@ async def login(db: AsyncSession, response: Response, UserData: UserLogin):
     set_cookie(response=response, key="AccessToken", value=access_token)
     set_cookie(response=response, key="RefreshToken", value=refresh_token)
 
-    return "welcome"
-
+    return json_response(msg = "welcome")
 
 async def forget_password(db: AsyncSession, phone: UserPhone, rds: Redis):
     if not await UserRepository.check_exists_phone(db=db, phone=phone.phone):
         raise UserNotFound
 
     code = await ForgetPassword.new_verification_code(rds=rds, phone=phone.phone)
-    return code  # send via SMS
+    return json_response(msg = code, key="code")  # send via SMS
 
 
 async def change_password(db: AsyncSession, UserData: ChangePassword, rds: Redis):
@@ -103,20 +103,20 @@ async def change_password(db: AsyncSession, UserData: ChangePassword, rds: Redis
         await ForgetPassword.password_changed_at(
             rds=rds, user_id=user.id, time=password_changed_at
         )
-        return "Your password has been successfully changed"
+        return json_response(msg = "Your password has been successfully changed")
 
 
-async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: uuid4):
+async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: UUID):
     info = profile.dict(exclude_unset=True)
     if not info:
         raise EmptyValues
 
     update = await UserRepository.update_profile(db=db, user_id=user_id, values=info)
     if update:
-        return "Your profile has been successfully updated"
+        return await get_me(db = db, user_id = user_id)
 
 
-async def get_me(db: AsyncSession, user_id: uuid4):
+async def get_me(db: AsyncSession, user_id: UUID):
     if user := await UserRepository.get_user_by_id(db=db, user_id=user_id):
         return user
 
@@ -132,4 +132,4 @@ async def logout(rds: Redis, request: Request, response: Response):
 
     delete_cookie(response=response, key="AccessToken")
     delete_cookie(response=response, key="RefreshToken")
-    return "Logged out successfully"
+    return json_response(msg = "Logged out successfully")

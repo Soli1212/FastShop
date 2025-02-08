@@ -21,7 +21,7 @@ async def Add_To_Cart(
 @Router.post("/delete")
 async def Delete_Product(item: DeleteItem, auth: authorize = Depends()):
     return await CartService.delete_product(
-        rds=auth["rds"], user_id=auth["id"], item=item
+        db = auth["db"], rds=auth["rds"], user_id=auth["id"], item=item
     )
 
 

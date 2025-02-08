@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from Application.Database.repositories import AddressRepository
 from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound
 from Domain.schemas.AddressSchemas import NewAddress, UpdateAddress
+from uuid import UUID
 
 IRANIAN_PROVINCES = [
     "البرز",
@@ -39,7 +40,7 @@ IRANIAN_PROVINCES = [
 ]
 
 
-async def new_address(db: AsyncSession, address: NewAddress, user_id: str):
+async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
     if await AddressRepository.get_address_count(db=db, user_id=user_id) >= 3:
         raise AddressLimit
 
@@ -51,20 +52,20 @@ async def new_address(db: AsyncSession, address: NewAddress, user_id: str):
     )
 
     if added_address:
-        return "The address has been successfully registered."
+        return await my_addresses(db = db, user_id = user_id)
 
 
-async def delete_address(db: AsyncSession, user_id: str, address_id: int):
+async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
     if await AddressRepository.delete_address(
         db=db, address_id=address_id, user_id=user_id
     ):
-        return "The address has been successfully deleted."
+        return await my_addresses(db = db, user_id = user_id)
     else:
         raise NoAddressWasFound
 
 
 async def update_address(
-    db: AsyncSession, user_id: str, address_id: int, uaddress: UpdateAddress
+    db: AsyncSession, user_id: UUID, address_id: int, uaddress: UpdateAddress
 ):
     if address := await AddressRepository.get_address(
         db=db, address_id=address_id, user_id=user_id
@@ -76,5 +77,5 @@ async def update_address(
         raise NoAddressWasFound
 
 
-async def my_addresses(db: AsyncSession, user_id: int):
+async def my_addresses(db: AsyncSession, user_id: UUID):
     return await AddressRepository.get_my_addresses(db, user_id=user_id)
