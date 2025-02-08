@@ -18,11 +18,7 @@ class Users(BaseModel):
 
     email = Column(String(100), nullable=True, unique=True)
 
-    password = Column(String(255), nullable=False)
-
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
-
-    last_password_change = Column(DateTime, default=None)
 
     Addresses = relationship("Addresses", back_populates="user")
     orders = relationship("Orders", back_populates="user")

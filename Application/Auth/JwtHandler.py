@@ -16,14 +16,12 @@ REFRESH_TOKEN_KEY = getenv("REFRESH_TOKEN_KEY")
 def new_access_token(payload: dict, exp: int = 15) -> str:
     """Generate a new access token with expiration time."""
     payload["exp"] = datetime.utcnow() + timedelta(minutes=exp)
-    payload["iat"] = (datetime.utcnow() + timedelta(seconds=1)).timestamp()
     return encode(payload=payload, key=ACCESS_TOKEN_KEY, algorithm="HS256")
 
 
 def new_refresh_token(payload: dict, exp: int = 7) -> str:
     """Generate a new refresh token with expiration time."""
     payload["exp"] = datetime.utcnow() + timedelta(days=exp)
-    payload["iat"] = (datetime.utcnow() + timedelta(seconds=1)).timestamp()
     return encode(payload=payload, key=REFRESH_TOKEN_KEY, algorithm="HS256")
 
 

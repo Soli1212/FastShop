@@ -4,10 +4,10 @@ from aioredis import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.repositories import ProductRepository
-from utils import json_response
 from Application.RedisDB.RedisServices import CartItemService
 from Domain.Errors.Cart import NonExistent
 from Domain.schemas.Cart import CartItem, DeleteItem
+from utils import json_response
 
 
 async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUID):
@@ -23,18 +23,18 @@ async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUI
         raise NonExistent
 
     if await CartItemService.add_or_update_cart(rds=rds, item=item, user_id=user_id):
-        return await get_cart(db = db, rds = rds, user_id = user_id)
+        return await get_cart(db=db, rds=rds, user_id=user_id)
 
 
 async def delete_product(db: AsyncSession, rds: Redis, user_id: UUID, item: DeleteItem):
     if await CartItemService.remove_cart_item(rds=rds, user_id=user_id, item=item):
-        return await get_cart(db = db, rds = rds, user_id = user_id)
+        return await get_cart(db=db, rds=rds, user_id=user_id)
 
 
 async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID):
     cart_items = await CartItemService.get_cart_items(rds=rds, user_id=user_id)
     if not cart_items:
-        return json_response(msg = "Your cart is empty")
+        return json_response(msg="Your cart is empty")
 
     product_ids = list({int(item["product_id"]) for item in cart_items})
     products = await ProductRepository.get_products_list(

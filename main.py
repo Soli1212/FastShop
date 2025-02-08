@@ -4,9 +4,9 @@ from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
+from Application.Auth import Authorize
 from Application.Database.connection import get_db, init_db
 from Application.RedisDB.connection import RedisConnection
-from Application.Auth import Authorize
 from Domain.schemas.Cart import CartItem
 from Presentation import AddressRouter, CartRouter, ProductRouter, TagRouter, UserRouter
 

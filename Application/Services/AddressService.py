@@ -1,9 +1,10 @@
+from uuid import UUID
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.repositories import AddressRepository
 from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound
 from Domain.schemas.AddressSchemas import NewAddress, UpdateAddress
-from uuid import UUID
 
 IRANIAN_PROVINCES = [
     "البرز",
@@ -52,14 +53,14 @@ async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
     )
 
     if added_address:
-        return await my_addresses(db = db, user_id = user_id)
+        return await my_addresses(db=db, user_id=user_id)
 
 
 async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
     if await AddressRepository.delete_address(
         db=db, address_id=address_id, user_id=user_id
     ):
-        return await my_addresses(db = db, user_id = user_id)
+        return await my_addresses(db=db, user_id=user_id)
     else:
         raise NoAddressWasFound
 
