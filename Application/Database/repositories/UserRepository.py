@@ -32,7 +32,7 @@ async def login(db: AsyncSession, phone: str):
 
 async def get_user_by_id(db: AsyncSession, user_id: uuid4):
     """Get user by ID"""
-    query = select(Users.id).where(
+    query = select(Users.id, Users.phone, Users.fullname, Users.email).where(
         Users.id == user_id
     )
     result = await db.execute(query)

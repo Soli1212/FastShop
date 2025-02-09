@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.models import Products, product_tags
@@ -6,7 +7,8 @@ from Domain.Errors.Tag import PageNotFound
 
 
 async def get_tags(db: AsyncSession):
-    return await TagRepository.get_tags(db=db)
+    tags = await TagRepository.get_tags(db=db)
+    return [i["Tags"] for i in tags]
 
 
 async def get_tag_products(
@@ -18,7 +20,12 @@ async def get_tag_products(
         filters_list.append(Products.price >= int(min_price))
 
     if max_price := filters.get("max_price"):
-        filters_list.append(Products.price <= int(max_price))
+        filters_list.append(
+            or_(
+                Products.price <= int(max_price),
+                Products.discounted_price <= int(max_price),
+            )
+        )
 
     if size := filters.get("size"):
         size_list = [int(i) for i in size.split("-")]

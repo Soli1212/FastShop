@@ -33,7 +33,7 @@ async def sing_in(
 
     await VcodeService.delete_verification_code(rds=rds, phone=VerifyData.phone)
 
-    if await UserRepository.login(db=db, phone=VerifyData.phone):
+    if user := await UserRepository.login(db=db, phone=VerifyData.phone):
         payload = {"id": str(user.get("id"))}
     else:
         if user := await UserRepository.create_user(db=db, user_phone=VerifyData.phone):
@@ -74,5 +74,5 @@ async def logout(rds: Redis, request: Request, response: Response):
 
     delete_cookie(response=response, key="AccessToken")
     delete_cookie(response=response, key="RefreshToken")
-    
+
     return json_response(msg="Logged out successfully")
