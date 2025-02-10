@@ -1,10 +1,10 @@
 from sqlalchemy import Boolean, Column, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 
-class ProductImages(BaseModel):
+class ProductImages(Base):
     __tablename__ = "productImages"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)

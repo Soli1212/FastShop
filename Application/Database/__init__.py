@@ -1,1 +1,1 @@
-from .connection import BaseModel, get_db
+from .connection import Base, get_db

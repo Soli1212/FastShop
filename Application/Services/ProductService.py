@@ -7,7 +7,7 @@ from Domain.Errors.Product import PageNotFound
 
 async def load_product(db: AsyncSession, product_id: int):
     if product := await ProductRepository.load_product(db=db, product_id=product_id):
-        return product
+        return product["Products"]
     raise PageNotFound
 
 

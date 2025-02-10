@@ -19,14 +19,15 @@ async def tags(
     request: Request,
     db: AsyncSession = Depends(get_db),
     tag_id: int = Path(gt=0),
-    min_price: int = Query(default=None, ge=35000),
-    max_price: int = Query(default=None, le=2000000, ge=35000),
+    min_price: Optional[int] = Query(default=None, ge=35000),
+    max_price: Optional[int] = Query(default=None, le=2000000, ge=35000),
     size: Optional[str] = Query(default=None, pattern=r"^\d{2}(-\d{2})*$"),
     color: Optional[str] = Query(
         default=None, pattern=r"^([0-9A-Fa-f]{6})(-[0-9A-Fa-f]{6})*-?$|^$"
     ),
+    order_by: Optional[str] = Query(default="new"),
     page: int = Query(default=0, ge=0),
 ):
     return await TagService.get_tag_products(
-        db=db, filters=request.query_params, tag_id=tag_id
+        db=db, filters=dict(request.query_params), tag_id=tag_id, order_by=order_by
     )

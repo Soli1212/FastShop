@@ -1,4 +1,4 @@
-from sqlalchemy import or_
+from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.models import Products, product_tags
@@ -12,7 +12,7 @@ async def get_tags(db: AsyncSession):
 
 
 async def get_tag_products(
-    db: AsyncSession, filters: dict, tag_id: int, limit: int = 2
+    db: AsyncSession, filters: dict, order_by: str, tag_id: int, limit: int = 2
 ):
     filters_list = [product_tags.c.tag_id == tag_id]
 
@@ -21,10 +21,7 @@ async def get_tag_products(
 
     if max_price := filters.get("max_price"):
         filters_list.append(
-            or_(
-                Products.price <= int(max_price),
-                Products.discounted_price <= int(max_price),
-            )
+            func.coalesce(Products.discounted_price, Products.price) <= int(max_price)
         )
 
     if size := filters.get("size"):
@@ -36,13 +33,14 @@ async def get_tag_products(
         filters_list.append(Products.colors.overlap(color_list))
 
     tag_products = await TagRepository.get_tag_products(
-        db=db, filters_list=filters_list, limit=limit, page=int(filters.get("page", 0))
+        db=db,
+        filters_list=filters_list,
+        limit=limit,
+        page=int(filters.get("page", 0)),
+        order_by=order_by,
     )
 
     if not tag_products[0]:
         raise PageNotFound
 
-    return {
-        "next_page": tag_products[1],
-        "products": tag_products[0],
-    }
+    return {"next_page": tag_products[1], "products": tag_products[0]}

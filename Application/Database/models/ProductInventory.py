@@ -3,10 +3,10 @@ from datetime import datetime
 from sqlalchemy import Column, DateTime, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 
-class ProductInventory(BaseModel):
+class ProductInventory(Base):
     __tablename__ = "product_inventories"
 
     id = Column(Integer, primary_key=True, autoincrement=True)

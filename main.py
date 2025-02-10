@@ -1,5 +1,4 @@
 from typing import Optional
-
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
@@ -26,27 +25,29 @@ async def shutdown_event():
 
 
 # Routers ------------------------------
-app.include_router(router=UserRouter, prefix="/user")
-app.include_router(router=AddressRouter, prefix="/address")
-app.include_router(router=TagRouter, prefix="/tags")
-app.include_router(router=ProductRouter, prefix="/products")
-app.include_router(router=CartRouter, prefix="/cart")
+app.include_router(UserRouter, prefix="/user")
+app.include_router(AddressRouter, prefix="/address")
+app.include_router(TagRouter, prefix="/tags")
+app.include_router(ProductRouter, prefix="/products")
+app.include_router(CartRouter, prefix="/cart")
 
 
 # Middlewares --------------------------
+LOGOUT_DEPENDS = {
+    "/user/sing-up",
+    "/user/singup",
+    "/user/singin",
+    "/user/forget-pass",
+    "/user/forget-Pass",
+    "/user/change-pass",
+}
+
+
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
-    LogoutDepends = [
-        "/user/sing-up",
-        "/user/singup",
-        "/user/singin",
-        "/user/forget-pass",
-        "/user/forget-Pass",
-        "/user/change-pass",
-    ]
-    if request.url.path in LogoutDepends:
-        access_token = request.cookies.get("AccessToken", None)
-        refresh_token = request.cookies.get("RefreshToken", None)
+    if request.url.path in LOGOUT_DEPENDS:
+        access_token = request.cookies.get("AccessToken")
+        refresh_token = request.cookies.get("RefreshToken")
 
         if access_token and refresh_token:
             return RedirectResponse(url="/user/me", status_code=302)
@@ -61,4 +62,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
 # Root Endpoint ------------------------
+@app.get("/")
+async def root():
+    return {"message": "API is running 🚀"}

@@ -79,4 +79,6 @@ async def update_address(
 
 
 async def my_addresses(db: AsyncSession, user_id: UUID):
-    return await AddressRepository.get_my_addresses(db, user_id=user_id)
+    Addresses = await AddressRepository.get_my_addresses(db, user_id=user_id)
+
+    return [i["Addresses"] for i in Addresses]

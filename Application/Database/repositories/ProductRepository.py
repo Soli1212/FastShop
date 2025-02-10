@@ -10,7 +10,7 @@ async def load_product(db: AsyncSession, product_id: int):
     query = (
         select(Products)
         .options(joinedload(Products.images).load_only(ProductImages.url))
-        .options(joinedload(Products.tags).load_only(Tags.id))
+        .options(joinedload(Products.tags).load_only(Tags.id, Tags.name))
         .where(Products.id == product_id)
     )
     result = await db.execute(query)

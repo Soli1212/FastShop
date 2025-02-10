@@ -1,10 +1,10 @@
 from sqlalchemy import Column, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 
-class OrderItems(BaseModel):
+class OrderItems(Base):
     __tablename__ = "orderItems"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)

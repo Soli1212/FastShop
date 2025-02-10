@@ -4,12 +4,12 @@ from sqlalchemy import Boolean, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import ARRAY
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 from .Tag import product_tags
 
 
-class Products(BaseModel):
+class Products(Base):
     __tablename__ = "products"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
@@ -32,7 +32,9 @@ class Products(BaseModel):
 
     new = Column(Boolean, nullable=False, default=True, index=True)
 
-    lux = Column(Boolean, nullable=False, default=True, index=True)
+    lux = Column(Boolean, nullable=False, default=False, index=True)
+
+    best_selling = Column(Boolean, nullable=False, default=False, index=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, index=True)
 

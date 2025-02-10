@@ -4,7 +4,7 @@ from datetime import datetime
 from sqlalchemy import Column, Enum, Float, ForeignKey, Integer, String
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 
 class OrderStatusEnum(enum.Enum):
@@ -13,7 +13,7 @@ class OrderStatusEnum(enum.Enum):
     delivered = "delivered"
 
 
-class Orders(BaseModel):
+class Orders(Base):
     __tablename__ = "orders"
 
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)

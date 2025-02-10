@@ -7,7 +7,7 @@ from sqlalchemy.orm import declarative_base, sessionmaker
 load_dotenv()
 
 DATABASE_URL = getenv("DATABASE_URL")
-BaseModel = declarative_base()
+Base = declarative_base()
 
 engine = create_async_engine(
     url=DATABASE_URL,
@@ -25,7 +25,7 @@ AsyncSessionLocal = sessionmaker(
 async def init_db():
     try:
         async with engine.begin() as conn:
-            await conn.run_sync(BaseModel.metadata.create_all)
+            await conn.run_sync(Base.metadata.create_all)
         print("Database connected successfully")
     except:
         print("Database connection failed")

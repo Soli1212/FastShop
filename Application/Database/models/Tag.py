@@ -1,11 +1,11 @@
 from sqlalchemy import Column, ForeignKey, Integer, String, Table
 from sqlalchemy.orm import relationship
 
-from Application.Database import BaseModel
+from Application.Database import Base
 
 product_tags = Table(
     "product_tags",
-    BaseModel.metadata,
+    Base.metadata,
     Column(
         "product_id",
         Integer,
@@ -18,7 +18,7 @@ product_tags = Table(
 )
 
 
-class Tags(BaseModel):
+class Tags(Base):
     __tablename__ = "tags"
 
     id = Column(Integer, primary_key=True, index=True)

@@ -1,5 +1,4 @@
 from typing import Tuple
-
 from sqlalchemy import and_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
@@ -22,6 +21,7 @@ async def get_tag_products(
     db: AsyncSession,
     filters_list: list,
     limit: int,
+    order_by: str = "new",
     page: int = 0,
 ) -> Tuple[list, bool]:
 
@@ -46,6 +46,18 @@ async def get_tag_products(
         .limit(limit + 1)
         .offset(page * limit)
     )
+
+    if order_by == "new":
+        query = query.order_by(Products.created_at.desc(), Products.id.desc())
+
+    elif order_by == "sale":
+        query = query.order_by(Products.best_selling.desc(), Products.id.desc())
+
+    elif order_by == "mxp":
+        query = query.order_by(Products.price.desc())
+
+    elif order_by == "mnp":
+        query = query.order_by(Products.price.asc())
 
     result = await db.execute(query)
     products = result.mappings().all()
