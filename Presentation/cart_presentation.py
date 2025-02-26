@@ -3,8 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Auth import authorize
 from Application.Database import get_db
-from Application.Services import CartService
-from Domain.schemas.Cart import CartItem, DeleteItem
+from Application.Services import cart_service
+from Domain.schemas.cart_schemas import CartItem, DeleteItem
 
 Router = APIRouter()
 
@@ -13,7 +13,7 @@ Router = APIRouter()
 async def Add_To_Cart(
     item: CartItem, auth: authorize = Depends(), db: AsyncSession = Depends(get_db)
 ):
-    return await CartService.add_to_cart(
+    return await cart_service.add_to_cart(
         db=db, rds=auth["rds"], user_id=auth["id"], item=item
     )
 
@@ -22,7 +22,7 @@ async def Add_To_Cart(
 async def Delete_Product(
     item: DeleteItem, auth: authorize = Depends(), db: AsyncSession = Depends(get_db)
 ):
-    return await CartService.delete_product(
+    return await cart_service.delete_product(
         db=db, rds=auth["rds"], user_id=auth["id"], item=item
     )
 
@@ -32,4 +32,4 @@ async def cart(
     auth: authorize = Depends(),
     db: AsyncSession = Depends(get_db),
 ):
-    return await CartService.get_cart(db=db, rds=auth["rds"], user_id=auth["id"])
+    return await cart_service.get_cart(db=db, rds=auth["rds"], user_id=auth["id"])

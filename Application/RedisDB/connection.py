@@ -2,7 +2,7 @@ import asyncio
 import logging
 from os import getenv
 
-from aioredis import from_url, Redis
+from aioredis import Redis, from_url
 from dotenv import load_dotenv
 
 load_dotenv()

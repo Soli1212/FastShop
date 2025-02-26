@@ -6,7 +6,7 @@ from sqlalchemy.orm import relationship
 
 from Application.Database import Base
 
-from .Tag import product_tags
+from .tag import product_tags
 
 
 class Products(Base):

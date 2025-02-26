@@ -3,8 +3,8 @@ from random import randint
 
 from aioredis import Redis
 
-from Domain.Errors.Vcode import SendedCode
-from Domain.schemas.UserSchemas import UserPhone
+from Domain.Errors.vcode import SendedCode
+from Domain.schemas.user_schemas import UserPhone
 
 
 async def exists_verification_code(rds: Redis, phone: str) -> bool:

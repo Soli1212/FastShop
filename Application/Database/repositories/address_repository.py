@@ -1,15 +1,15 @@
-from sqlalchemy import delete, func
+from uuid import UUID
+
+from sqlalchemy import delete, exists, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 
 from Application.Database.models import Addresses
-from Domain.schemas.AddressSchemas import NewAddress
+from Domain.schemas.address_schemas import NewAddress
 
 
 async def get_address_count(db: AsyncSession, user_id: str):
-    query = (
-        select(func.count()).select_from(Addresses).where(Addresses.user_id == user_id)
-    )
+    query = select(func.count(Addresses.id)).where(Addresses.user_id == user_id)
     result = await db.execute(query)
     return result.scalar()
 
@@ -42,3 +42,11 @@ async def get_my_addresses(db: AsyncSession, user_id: str):
     query = select(Addresses).where(Addresses.user_id == user_id)
     result = await db.execute(query)
     return result.mappings().all()
+
+
+async def address_exists(db: AsyncSession, address_id: int, user_id: UUID) -> bool:
+    query = select(
+        exists().where(Addresses.id == address_id, Addresses.user_id == user_id)
+    )
+    result = await db.scalar(query)
+    return result

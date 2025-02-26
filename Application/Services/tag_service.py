@@ -2,12 +2,12 @@ from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.models import Products, product_tags
-from Application.Database.repositories import TagRepository
-from Domain.Errors.Tag import PageNotFound
+from Application.Database.repositories import tag_repository
+from Domain.Errors.tag import PageNotFound
 
 
 async def get_tags(db: AsyncSession):
-    tags = await TagRepository.get_tags(db=db)
+    tags = await tag_repository.get_tags(db=db)
     return [i["Tags"] for i in tags]
 
 
@@ -32,7 +32,7 @@ async def get_tag_products(
         color_list = color.split("-")
         filters_list.append(Products.colors.overlap(color_list))
 
-    tag_products = await TagRepository.get_tag_products(
+    tag_products = await tag_repository.get_tag_products(
         db=db,
         filters_list=filters_list,
         limit=limit,

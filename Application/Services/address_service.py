@@ -2,9 +2,9 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Application.Database.repositories import AddressRepository
+from Application.Database.repositories import address_repository
 from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound
-from Domain.schemas.AddressSchemas import NewAddress, UpdateAddress
+from Domain.schemas.address_schemas import NewAddress, UpdateAddress
 
 IRANIAN_PROVINCES = [
     "البرز",
@@ -42,13 +42,13 @@ IRANIAN_PROVINCES = [
 
 
 async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
-    if await AddressRepository.get_address_count(db=db, user_id=user_id) >= 3:
+    if await address_repository.get_address_count(db=db, user_id=user_id) >= 3:
         raise AddressLimit
 
     if address.province not in IRANIAN_PROVINCES:
         raise InvalidProvince
 
-    added_address = await AddressRepository.add_new_address(
+    added_address = await address_repository.add_new_address(
         db=db, new_address=address, user_id=user_id
     )
 
@@ -57,7 +57,7 @@ async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
 
 
 async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
-    if await AddressRepository.delete_address(
+    if await address_repository.delete_address(
         db=db, address_id=address_id, user_id=user_id
     ):
         return await my_addresses(db=db, user_id=user_id)
@@ -68,7 +68,7 @@ async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
 async def update_address(
     db: AsyncSession, user_id: UUID, address_id: int, uaddress: UpdateAddress
 ):
-    if address := await AddressRepository.get_address(
+    if address := await address_repository.get_address(
         db=db, address_id=address_id, user_id=user_id
     ):
         for name, value in uaddress.dict(exclude_unset=True).items():
@@ -79,6 +79,6 @@ async def update_address(
 
 
 async def my_addresses(db: AsyncSession, user_id: UUID):
-    Addresses = await AddressRepository.get_my_addresses(db, user_id=user_id)
+    Addresses = await address_repository.get_my_addresses(db, user_id=user_id)
 
     return [i["Addresses"] for i in Addresses]

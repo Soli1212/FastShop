@@ -1,2 +1,2 @@
-from . import JwtHandler
-from .Authorize import authorize
+from . import jwt_handler
+from .authorize import authorize

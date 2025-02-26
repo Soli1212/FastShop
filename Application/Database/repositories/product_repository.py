@@ -1,12 +1,12 @@
 from sqlalchemy import and_, exists
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, load_only, selectinload
 
 from Application.Database.models import ProductImages, ProductInventory, Products, Tags
 
 
-async def load_product(db: AsyncSession, product_id: int):
+async def get_product_details(db: AsyncSession, product_id: int):
     query = (
         select(Products)
         .options(joinedload(Products.images).load_only(ProductImages.url))
@@ -17,7 +17,7 @@ async def load_product(db: AsyncSession, product_id: int):
     return result.unique().mappings().first()
 
 
-async def load_filter_products(db: AsyncSession, limit: int, offset: int, filter):
+async def filter_products(db: AsyncSession, limit: int, offset: int, filter):
     query = (
         select(
             Products.id,
@@ -48,7 +48,7 @@ async def load_filter_products(db: AsyncSession, limit: int, offset: int, filter
     return lux_products, has_next
 
 
-async def get_products_list(db: AsyncSession, product_list: list[int]):
+async def get_products_by_ids(db: AsyncSession, product_list: list[int]):
     query = (
         select(
             Products.id,
@@ -70,7 +70,30 @@ async def get_products_list(db: AsyncSession, product_list: list[int]):
     return result.mappings().all()
 
 
-async def variant_exists(
+async def get_products_variants_by_ids(db: AsyncSession, products_ids: list[int]):
+
+    query = (
+        select(Products)
+        .options(
+            load_only(
+                Products.id, Products.name, Products.price, Products.discounted_price
+            )
+        )
+        .options(
+            selectinload(Products.inventories).load_only(
+                ProductInventory.size,
+                ProductInventory.color,
+                ProductInventory.inventory,
+            )
+        )
+        .where(Products.id.in_(products_ids))
+    )
+
+    result = await db.execute(query)
+    return result.scalars().all()
+
+
+async def check_variant_availability(
     db: AsyncSession,
     product_id: int,
     selected_color: str,

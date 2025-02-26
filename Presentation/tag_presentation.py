@@ -4,14 +4,14 @@ from fastapi import APIRouter, Depends, Path, Query, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database import get_db
-from Application.Services import TagService
+from Application.Services import tag_service
 
 Router = APIRouter()
 
 
 @Router.get("/")
 async def me(db: AsyncSession = Depends(get_db)):
-    return await TagService.get_tags(db=db)
+    return await tag_service.get_tags(db=db)
 
 
 @Router.get("/{tag_id}")
@@ -28,6 +28,6 @@ async def tags(
     order_by: Optional[str] = Query(default="new"),
     page: int = Query(default=0, ge=0),
 ):
-    return await TagService.get_tag_products(
+    return await tag_service.get_tag_products(
         db=db, filters=dict(request.query_params), tag_id=tag_id, order_by=order_by
     )

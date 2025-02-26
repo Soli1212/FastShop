@@ -1,6 +1,4 @@
-from base64 import b64decode
 from datetime import datetime, timedelta
-from json import loads
 from os import getenv
 
 from dotenv import load_dotenv
@@ -42,10 +40,7 @@ def verify_refresh_token(token: str) -> dict:
 
 
 def get_token_exp_as_seconds(token: str) -> int:
-    """Extract expiration time from token and return remaining seconds."""
-    payload_part = token.split(".")[1]
-    decoded_payload = b64decode(payload_part + "==").decode("utf-8")
-    payload = loads(decoded_payload)
-    exp_time = datetime.utcfromtimestamp(payload["exp"])
+    verified_token = verify_refresh_token(token)
+    exp_time = datetime.utcfromtimestamp(verified_token["exp"])
     remaining_seconds = (exp_time - datetime.utcnow()).total_seconds()
     return int(remaining_seconds) if remaining_seconds > 0 else None

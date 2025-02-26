@@ -13,8 +13,6 @@ class Discounts(Base):
 
     code = Column(String, unique=True, index=True, nullable=False)
 
-    description = Column(String)
-
     discount_percentage = Column(Float, nullable=False)
 
     min_order_value = Column(Float, default=0)

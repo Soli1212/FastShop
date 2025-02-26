@@ -3,8 +3,8 @@ from uuid import UUID
 
 from aioredis import Redis
 
-from Domain.Errors.Cart import ProductNotFound
-from Domain.schemas.Cart import CartItem, DeleteItem
+from Domain.Errors.cart import ProductNotFound
+from Domain.schemas.cart_schemas import CartItem, DeleteItem
 
 
 async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):

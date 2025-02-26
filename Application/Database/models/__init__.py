@@ -1,9 +1,9 @@
-from .Address import Addresses
-from .Discount import Discounts
-from .Order import Orders
-from .OrderItem import OrderItems
-from .Product import Products
-from .ProductImage import ProductImages
-from .ProductInventory import ProductInventory
-from .Tag import Tags, product_tags
-from .User import Users
+from .address import Addresses
+from .discount import Discounts
+from .order import Orders
+from .order_item import OrderItems
+from .product import Products
+from .product_image import ProductImages
+from .product_inventory import ProductInventory
+from .tag import Tags, product_tags
+from .user import Users

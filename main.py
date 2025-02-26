@@ -1,13 +1,21 @@
-from typing import Optional
+from datetime import datetime, timedelta
+
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 
-from Application.Auth import Authorize
+from Application.Auth import authorize
 from Application.Database.connection import get_db, init_db
+from Application.Database.models import Discounts
 from Application.RedisDB.connection import RedisConnection
-from Domain.schemas.Cart import CartItem
-from Presentation import AddressRouter, CartRouter, ProductRouter, TagRouter, UserRouter
+from Presentation import (
+    AddressRouter,
+    CartRouter,
+    OrderRouter,
+    ProductRouter,
+    TagRouter,
+    UserRouter,
+)
 
 app = FastAPI()
 
@@ -30,6 +38,7 @@ app.include_router(AddressRouter, prefix="/address")
 app.include_router(TagRouter, prefix="/tags")
 app.include_router(ProductRouter, prefix="/products")
 app.include_router(CartRouter, prefix="/cart")
+app.include_router(OrderRouter, prefix="/order")
 
 
 # Middlewares --------------------------
@@ -66,5 +75,12 @@ app.add_middleware(
 
 # Root Endpoint ------------------------
 @app.get("/")
-async def root():
-    return {"message": "API is running 🚀"}
+async def root(db: get_db = Depends()):
+    d = Discounts(
+        code="TESTI",
+        discount_percentage=4,
+        min_order_value=50000,
+        start_date=datetime.utcnow(),
+        end_date=datetime.utcnow() + timedelta(days=3),
+    )
+    db.add(d)
