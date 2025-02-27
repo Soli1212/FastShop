@@ -8,19 +8,33 @@ Router = APIRouter()
 
 
 @Router.get("/luxuries")
-async def Luxuries_products(
+async def luxuries_products(
     page: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    return await product_service.lux_products(db=db, offset=page)
+    return await product_service.get_filtered_products(
+        db=db, offset=page, filter_type=product_service.ProductFilterType.LUX
+    )
 
 
 @Router.get("/new")
-async def New_products(
+async def new_products(
     page: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    return await product_service.new_products(db=db, offset=page)
+    return await product_service.get_filtered_products(
+        db=db, offset=page, filter_type=product_service.ProductFilterType.NEW
+    )
+
+
+@Router.get("/best-selling")
+async def best_selling_products(
+    page: int = Query(default=0, ge=0),
+    db: AsyncSession = Depends(get_db),
+):
+    return await product_service.get_filtered_products(
+        db=db, offset=page, filter_type=product_service.ProductFilterType.best_selling
+    )
 
 
 @Router.get("/discounted")
@@ -28,7 +42,9 @@ async def discounted_products(
     page: int = Query(default=0, ge=0),
     db: AsyncSession = Depends(get_db),
 ):
-    return await product_service.discounted_products(db=db, offset=page)
+    return await product_service.get_filtered_products(
+        db=db, offset=page, filter_type=product_service.ProductFilterType.DISCOUNTED
+    )
 
 
 @Router.get("/{product_id}")

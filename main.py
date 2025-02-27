@@ -77,7 +77,7 @@ app.add_middleware(
 @app.get("/")
 async def root(db: get_db = Depends()):
     d = Discounts(
-        code="TESTI",
+        code="Noroz404",
         discount_percentage=4,
         min_order_value=50000,
         start_date=datetime.utcnow(),

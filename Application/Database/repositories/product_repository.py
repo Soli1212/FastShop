@@ -9,12 +9,14 @@ from Application.Database.models import ProductImages, ProductInventory, Product
 async def get_product_details(db: AsyncSession, product_id: int):
     query = (
         select(Products)
-        .options(joinedload(Products.images).load_only(ProductImages.url))
-        .options(joinedload(Products.tags).load_only(Tags.id, Tags.name))
+        .options(
+            selectinload(Products.images).load_only(ProductImages.url),
+            selectinload(Products.tags).load_only(Tags.id, Tags.name),
+        )
         .where(Products.id == product_id)
     )
     result = await db.execute(query)
-    return result.unique().mappings().first()
+    return result.mappings().first()
 
 
 async def filter_products(db: AsyncSession, limit: int, offset: int, filter):

@@ -48,17 +48,17 @@ async def get_tag_products(
         .offset(page * limit)
     )
 
-    if order_by == "new":
-        query = query.order_by(Products.created_at.desc(), Products.id.desc())
-
-    elif order_by == "sale":
-        query = query.order_by(Products.best_selling.desc(), Products.id.desc())
-
-    elif order_by == "mxp":
-        query = query.order_by(Products.price.desc())
-
-    elif order_by == "mnp":
-        query = query.order_by(Products.price.asc())
+    match order_by:
+        case "new":
+            query = query.order_by(Products.created_at.desc(), Products.id.desc())
+        case "sale":
+            query = query.order_by(Products.best_selling.desc(), Products.id.desc())
+        case "mxp":
+            query = query.order_by(Products.price.desc())
+        case "mnp":
+            query = query.order_by(Products.price.asc())
+        case _:
+            query = query.order_by(Products.created_at.desc(), Products.id.desc())
 
     result = await db.execute(query)
     products = result.mappings().all()
