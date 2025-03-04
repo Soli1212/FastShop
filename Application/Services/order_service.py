@@ -1,7 +1,9 @@
 from asyncio import gather
 from datetime import datetime
+from uuid import UUID
 
 from aioredis import Redis
+from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.repositories import (
@@ -9,7 +11,8 @@ from Application.Database.repositories import (
     discount_repository,
     product_repository,
 )
-from Application.RedisDB.RedisServices import cart_item_service
+from Application.Payment import ZarinPalPayment
+from Application.RedisDB.RedisServices import cart_item_service, temp_order_service
 from Domain.Errors.address import AddressNotFound
 from Domain.Errors.discount import (
     DiscountLimit,
@@ -21,6 +24,8 @@ from Domain.Errors.order import (
     ProductNotAvalible,
     ProductNotFound,
 )
+
+from Domain.Errors.payment import PaymentFailed
 from Domain.schemas.order_schemas import Order
 from utils import json_response
 
@@ -72,7 +77,7 @@ def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
     return True
 
 
-async def prepare_order(user_id: int, order: Order, db: AsyncSession, rds: Redis):
+async def prepare_order(user_id: UUID, order: Order, db: AsyncSession, rds: Redis):
     UserCart = await cart_item_service.get_cart_items(rds=rds, user_id=user_id)
     if not UserCart:
         return json_response(msg="Your cart is empty")
@@ -121,4 +126,40 @@ async def prepare_order(user_id: int, order: Order, db: AsyncSession, rds: Redis
             }
         )
 
-    return factor
+    save_factor = await temp_order_service.save_temp_order(
+        order=factor, user_id=user_id, rds=rds
+    )
+
+    if save_factor:
+        pay_url = await ZarinPalPayment().create_payment(
+            toman_amount=factor.get("total_cart")
+        )
+        return json_response(msg=pay_url, key="pay_url")
+
+
+async def order_confirmation(
+    user_id: UUID,
+    request: Request,  
+    db: AsyncSession,
+    rds: Redis
+):
+    temp_order = await temp_order_service.user_temp_order(
+        user_id=user_id, rds=rds
+    )
+
+    if not temp_order:
+        raise PaymentFailed
+
+    verify_pay = await ZarinPalPayment().verify_payment(
+        toman_amount=temp_order.get("total_cart"),
+        authority=request.query_params.get("Authority"),
+        status = request.query_params.get("Status"),
+    )
+
+    if not verify_pay:
+        raise PaymentFailed
+    
+    return verify_pay
+
+    
+    

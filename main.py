@@ -7,7 +7,9 @@ from fastapi.responses import RedirectResponse
 from Application.Auth import authorize
 from Application.Database.connection import get_db, init_db
 from Application.Database.models import Discounts
+from Application.Payment.zarinpal_pay import ZarinPalPayment
 from Application.RedisDB.connection import RedisConnection
+from Application.RedisDB.RedisServices import temp_order_service
 from Presentation import (
     AddressRouter,
     CartRouter,
@@ -33,12 +35,12 @@ async def shutdown_event():
 
 
 # Routers ------------------------------
-app.include_router(UserRouter, prefix="/user")
-app.include_router(AddressRouter, prefix="/address")
-app.include_router(TagRouter, prefix="/tags")
-app.include_router(ProductRouter, prefix="/products")
-app.include_router(CartRouter, prefix="/cart")
-app.include_router(OrderRouter, prefix="/order")
+app.include_router(UserRouter, prefix="/user", tags=["user"])
+app.include_router(AddressRouter, prefix="/address", tags=["address"])
+app.include_router(TagRouter, prefix="/tags", tags=["tags"])
+app.include_router(ProductRouter, prefix="/products", tags=["products"])
+app.include_router(CartRouter, prefix="/cart", tags=["cart"])
+app.include_router(OrderRouter, prefix="/order", tags=["order"])
 
 
 # Middlewares --------------------------
@@ -75,12 +77,16 @@ app.add_middleware(
 
 # Root Endpoint ------------------------
 @app.get("/")
-async def root(db: get_db = Depends()):
-    d = Discounts(
-        code="Noroz404",
-        discount_percentage=4,
-        min_order_value=50000,
-        start_date=datetime.utcnow(),
-        end_date=datetime.utcnow() + timedelta(days=3),
+async def root(request: Request, auth: authorize = Depends(), db: get_db = Depends()):
+
+    temp_order = await temp_order_service.user_temp_order(
+        user_id=auth["id"], rds=auth["rds"]
     )
-    db.add(d)
+
+    if not temp_order:
+        return "nok"
+
+    return await ZarinPalPayment().verify_payment(
+        toman_amount=temp_order.get("total_cart"),
+        authority=request.query_params.get("Authority"),
+    )
