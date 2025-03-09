@@ -46,8 +46,6 @@ async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID) -> dict:
 
     return calculate_final_price(cart_items=cart_items, product_map=product_map)
 
-    return products
-
 
 def calculate_final_price(cart_items: list, product_map: dict):
     total_cart = 0

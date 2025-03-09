@@ -22,13 +22,8 @@ async def prepare(
 
 @Router.get("/confirmation")
 async def confirmation(
-    Request: Request,
-    auth: authorize = Depends(),
-    db: AsyncSession = Depends(get_db)
+    Request: Request, auth: authorize = Depends(), db: AsyncSession = Depends(get_db)
 ):
     return await order_service.order_confirmation(
-        request = Request,
-        user_id = auth["id"],
-        db = db,
-        rds = auth["rds"]
+        request=Request, user_id=auth["id"], db=db, rds=auth["rds"]
     )

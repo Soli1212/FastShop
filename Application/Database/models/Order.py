@@ -1,7 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import Column, Enum, Float, ForeignKey, Integer, String
+from sqlalchemy import UUID, Column, DateTime, Enum, Float, ForeignKey, Integer
 from sqlalchemy.orm import relationship
 
 from Application.Database import Base
@@ -19,7 +19,7 @@ class Orders(Base):
     id = Column(Integer, primary_key=True, autoincrement=True, index=True)
 
     user_id = Column(
-        Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False
+        UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
 
     address_id = Column(
@@ -36,7 +36,7 @@ class Orders(Base):
         Enum(OrderStatusEnum), default=OrderStatusEnum.pending, nullable=False
     )
 
-    created_at = Column(String, default=datetime.utcnow, nullable=False)
+    created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
     user = relationship("Users", back_populates="orders")
     address = relationship("Addresses", back_populates="orders")

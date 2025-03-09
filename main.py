@@ -78,15 +78,4 @@ app.add_middleware(
 # Root Endpoint ------------------------
 @app.get("/")
 async def root(request: Request, auth: authorize = Depends(), db: get_db = Depends()):
-
-    temp_order = await temp_order_service.user_temp_order(
-        user_id=auth["id"], rds=auth["rds"]
-    )
-
-    if not temp_order:
-        return "nok"
-
-    return await ZarinPalPayment().verify_payment(
-        toman_amount=temp_order.get("total_cart"),
-        authority=request.query_params.get("Authority"),
-    )
+    return "hi"

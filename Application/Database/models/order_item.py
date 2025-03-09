@@ -16,6 +16,7 @@ class OrderItems(Base):
     product_id = Column(Integer, ForeignKey("products.id"), nullable=False)
 
     size = Column(Integer, nullable=True)
+
     color = Column(String, nullable=True)
 
     quantity = Column(Integer, default=1, nullable=False)

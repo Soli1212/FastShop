@@ -15,11 +15,12 @@ async def save_temp_order(
 
 async def user_temp_order(user_id: UUID, rds: Redis) -> dict:
     key = f"order:{user_id}"
-    try:
-        order_json = await rds.get(key)
-        if order_json:
-            return json.loads(order_json)
-        return {}
-    except Exception as e:
-        print(f"Error retrieving temp order: {e}")
-        return {}
+    order_json = await rds.get(key)
+    if order_json:
+        return json.loads(order_json)
+    return {}
+
+
+async def empty_temp_order(user_id: UUID, rds: Redis) -> bool:
+    key = f"order:{user_id}"
+    return True if await rds.delete(key) else False

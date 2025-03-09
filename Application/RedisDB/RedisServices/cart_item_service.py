@@ -53,3 +53,8 @@ async def get_cart_items(rds: Redis, user_id: UUID):
     if not cart_items:
         return {}
     return [loads(value) for _, value in cart_items.items()]
+
+
+async def empty_cart(rds: Redis, user_id: UUID):
+    key = f"cart:{user_id}"
+    return True if await rds.delete(key) else False

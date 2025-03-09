@@ -6,7 +6,7 @@ from Application.Database.repositories import address_repository
 from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound
 from Domain.schemas.address_schemas import NewAddress, UpdateAddress
 
-IRANIAN_PROVINCES = [
+IRANIAN_PROVINCES = {
     "البرز",
     "اردبیل",
     "بوشهر",
@@ -38,7 +38,7 @@ IRANIAN_PROVINCES = [
     "تهران",
     "یزد",
     "زنجان",
-]
+}
 
 
 async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):

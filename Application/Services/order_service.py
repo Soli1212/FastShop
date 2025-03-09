@@ -6,9 +6,11 @@ from aioredis import Redis
 from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from Application.Database.models import OrderItems
 from Application.Database.repositories import (
     address_repository,
     discount_repository,
+    order_repository,
     product_repository,
 )
 from Application.Payment import ZarinPalPayment
@@ -24,9 +26,8 @@ from Domain.Errors.order import (
     ProductNotAvalible,
     ProductNotFound,
 )
-
 from Domain.Errors.payment import PaymentFailed
-from Domain.schemas.order_schemas import Order
+from Domain.schemas.order_schemas import NewOrder, Order
 from utils import json_response
 
 from .cart_service import calculate_final_price
@@ -72,7 +73,7 @@ def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
         if not variant:
             raise ProductNotAvalible
         if variant.inventory < quantity:
-            raise InsufficientInventory
+            raise InsufficientInventory(product_id=item["product_id"])
 
     return True
 
@@ -138,14 +139,9 @@ async def prepare_order(user_id: UUID, order: Order, db: AsyncSession, rds: Redi
 
 
 async def order_confirmation(
-    user_id: UUID,
-    request: Request,  
-    db: AsyncSession,
-    rds: Redis
+    user_id: UUID, request: Request, db: AsyncSession, rds: Redis
 ):
-    temp_order = await temp_order_service.user_temp_order(
-        user_id=user_id, rds=rds
-    )
+    temp_order = await temp_order_service.user_temp_order(user_id=user_id, rds=rds)
 
     if not temp_order:
         raise PaymentFailed
@@ -153,13 +149,48 @@ async def order_confirmation(
     verify_pay = await ZarinPalPayment().verify_payment(
         toman_amount=temp_order.get("total_cart"),
         authority=request.query_params.get("Authority"),
-        status = request.query_params.get("Status"),
+        status=request.query_params.get("Status"),
     )
 
     if not verify_pay:
+        await temp_order_service.empty_temp_order(user_id=user_id, rds=rds)
         raise PaymentFailed
-    
-    return verify_pay
 
-    
-    
+    order = NewOrder(
+        address_id=temp_order.get("address_id"),
+        discount_id=temp_order.get("discount_code", None),
+        total_price=temp_order.get("total_cart"),
+    )
+
+    if add_new_order := await order_repository.add_order(
+        db=db, user_id=user_id, order=order
+    ):
+        order_items = [
+            OrderItems(
+                order_id=add_new_order,
+                product_id=item["product_id"],
+                size=item["size"],
+                color=item["color"],
+                quantity=item["quantity"],
+                price=item["price"],
+                total_price=item["total_price"],
+            )
+            for item in temp_order["cart_items"]
+        ]
+        update_inventory_mapping = [
+            (i.product_id, i.color, i.size, i.quantity) for i in order_items
+        ]
+
+        add_order_items, update_products_inventory = await gather(
+            order_repository.add_order_items(db=db, order_items=order_items),
+            product_repository.update_inventory(
+                db=db, product_updates=update_inventory_mapping
+            ),
+        )
+        if add_order_items and update_products_inventory:
+            await gather(
+                cart_item_service.empty_cart(user_id=user_id, rds=rds),
+                temp_order_service.empty_temp_order(user_id=user_id, rds=rds),
+            )
+
+            return json_response(msg="Your order has been successfully placed.")

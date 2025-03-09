@@ -1,4 +1,4 @@
-from sqlalchemy import and_, exists
+from sqlalchemy import and_, case, exists, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
@@ -26,6 +26,7 @@ async def filter_products(db: AsyncSession, limit: int, offset: int, filter):
             Products.name,
             Products.price,
             Products.discounted_price,
+            Products.inventory,
             ProductImages.url,
         )
         .outerjoin(
@@ -41,13 +42,13 @@ async def filter_products(db: AsyncSession, limit: int, offset: int, filter):
         .offset(limit * offset)
     )
     result = await db.execute(query)
-    lux_products = result.mappings().all()
+    products = result.mappings().all()
 
-    has_next = len(lux_products) > limit
+    has_next = len(products) > limit
     if has_next:
-        lux_products = lux_products[:-1]
+        products = products[:-1]
 
-    return lux_products, has_next
+    return products, has_next
 
 
 async def get_products_by_ids(db: AsyncSession, product_list: list[int]):
@@ -112,3 +113,38 @@ async def check_variant_availability(
     )
     result = await db.execute(query)
     return result.scalar()
+
+
+async def update_inventory(
+    db: AsyncSession,
+    product_updates: list[tuple[int, str | None, str | None, int]],  # پشتیبانی از NULL
+) -> None:
+    update_conditions = []
+    where_conditions = []
+
+    for pid, color, size, qty in product_updates:
+        color_clause = (
+            ProductInventory.color == None
+            if color is None
+            else ProductInventory.color == color
+        )
+
+        size_clause = (
+            ProductInventory.size == None
+            if size is None
+            else ProductInventory.size == size
+        )
+
+        condition = and_(ProductInventory.product_id == pid, color_clause, size_clause)
+        update_conditions.append((condition, ProductInventory.inventory - qty))
+        where_conditions.append(condition)
+
+    stmt = (
+        update(ProductInventory)
+        .values(inventory=case(*update_conditions, else_=ProductInventory.inventory))
+        .where(or_(*where_conditions))
+        .where(ProductInventory.inventory >= 0)
+    )
+
+    await db.execute(stmt)
+    return True

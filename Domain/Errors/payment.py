@@ -8,6 +8,7 @@ class PaymentFailed(HTTPException):
             detail=f"Unfortunately, the payment was unsuccessful !",
         )
 
+
 class TransactionAlreadyVerified(HTTPException):
     def __init__(self):
         super().__init__(
