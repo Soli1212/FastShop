@@ -11,6 +11,8 @@ class ProductImages(Base):
 
     url = Column(String, nullable=False)
 
+    color = Column(String, nullable=False)
+
     product_id = Column(
         Integer,
         ForeignKey("products.id", ondelete="CASCADE", onupdate="CASCADE"),

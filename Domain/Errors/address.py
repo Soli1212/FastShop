@@ -30,3 +30,10 @@ class AddressNotFound(HTTPException):
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Address Not Found !",
         )
+
+class ActiveOrderAddress(HTTPException):
+    def __init__(self):
+        super().__init__(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail="You have an active order with this address and cannot delete it at this time.",
+        )

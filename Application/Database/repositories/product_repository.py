@@ -10,7 +10,7 @@ async def get_product_details(db: AsyncSession, product_id: int):
     query = (
         select(Products)
         .options(
-            selectinload(Products.images).load_only(ProductImages.url),
+            selectinload(Products.images).load_only(ProductImages.url, ProductImages.color),
             selectinload(Products.tags).load_only(Tags.id, Tags.name),
         )
         .where(Products.id == product_id)
