@@ -3,20 +3,36 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
 
-from Application.Database.models import ProductImages, ProductInventory, Products, Tags
+from Application.Database.models import (
+    Colors,
+    ProductImages,
+    ProductInventory,
+    Products,
+    Tags,
+)
 
 
 async def get_product_details(db: AsyncSession, product_id: int):
     query = (
         select(Products)
         .options(
-            selectinload(Products.images).load_only(ProductImages.url, ProductImages.color),
-            selectinload(Products.tags).load_only(Tags.id, Tags.name),
+            joinedload(Products.inventories).load_only(
+                ProductInventory.size,
+                ProductInventory.color_id,
+                ProductInventory.inventory,
+            ),
+            joinedload(Products.tags).load_only(Tags.id, Tags.name),
+            joinedload(Products.images)
+            .load_only(ProductImages.url, ProductImages.color_id)
+            .joinedload(ProductImages.color)
+            .load_only(Colors.name, Colors.hex_code),
         )
         .where(Products.id == product_id)
     )
+
     result = await db.execute(query)
-    return result.mappings().first()
+    product = result.scalars().first()
+    return product
 
 
 async def filter_products(db: AsyncSession, limit: int, offset: int, filter):
@@ -85,7 +101,7 @@ async def get_products_variants_by_ids(db: AsyncSession, products_ids: list[int]
         .options(
             selectinload(Products.inventories).load_only(
                 ProductInventory.size,
-                ProductInventory.color,
+                ProductInventory.color_id,
                 ProductInventory.inventory,
             )
         )
@@ -99,14 +115,14 @@ async def get_products_variants_by_ids(db: AsyncSession, products_ids: list[int]
 async def check_variant_availability(
     db: AsyncSession,
     product_id: int,
-    selected_color: str,
+    selected_color: int,
     selected_size: int,
     required_quantity: int,
 ) -> bool:
     query = select(
         exists().where(
             ProductInventory.product_id == product_id,
-            ProductInventory.color == selected_color,
+            ProductInventory.color_id == selected_color,
             ProductInventory.size == selected_size,
             ProductInventory.inventory >= required_quantity,
         )
@@ -119,14 +135,15 @@ async def update_inventory(
     db: AsyncSession,
     product_updates: list[tuple[int, str | None, str | None, int]],  # پشتیبانی از NULL
 ) -> None:
+
     update_conditions = []
     where_conditions = []
 
-    for pid, color, size, qty in product_updates:
+    for pid, color_id, size, qty in product_updates:
         color_clause = (
-            ProductInventory.color == None
-            if color is None
-            else ProductInventory.color == color
+            ProductInventory.color_id == None
+            if color_id is None
+            else ProductInventory.color_id == color_id
         )
 
         size_clause = (

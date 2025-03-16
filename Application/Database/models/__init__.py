@@ -1,4 +1,5 @@
 from .address import Addresses
+from .color import Colors
 from .discount import Discounts
 from .order import Orders
 from .order_item import OrderItems

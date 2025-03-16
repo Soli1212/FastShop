@@ -14,7 +14,7 @@ async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUI
     product_inventory = await product_repository.check_variant_availability(
         db=db,
         product_id=item.product_id,
-        selected_color=item.color,
+        selected_color=item.color_id,
         selected_size=item.size,
         required_quantity=item.quantity,
     )
@@ -76,7 +76,7 @@ def calculate_final_price(cart_items: list, product_map: dict):
             "price": original_price,
             "discounted_price": discounted_price or 0,
             "total_price": final_price,
-            "color": item.get("color"),
+            "color_id": item.get("color_id"),
             "size": item.get("size"),
         }
         formatted_cart.append(formatted_item)

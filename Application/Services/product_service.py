@@ -11,7 +11,23 @@ async def load_product(db: AsyncSession, product_id: int):
     if product := await product_repository.get_product_details(
         db=db, product_id=product_id
     ):
-        return product["Products"]
+        result = {
+            "id": product.id,
+            "name": product.name,
+            "description": product.description,
+            "dimensions": product.dimensions,
+            "price": product.price,
+            "discounted_price": product.discounted_price,
+            "new": product.new,
+            "lux": product.lux,
+            "best_selling": product.best_selling,
+            "inventory": product.inventory,
+            "tags": product.tags,
+            "sizes": product.sizes,
+            "images": product.images,
+            "inventories": product.inventories,
+        }
+        return result
     raise PageNotFound
 
 

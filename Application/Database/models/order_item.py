@@ -17,7 +17,11 @@ class OrderItems(Base):
 
     size = Column(Integer, nullable=True)
 
-    color = Column(String, nullable=True)
+    color_id = Column(
+        Integer,
+        ForeignKey("colors.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
 
     quantity = Column(Integer, default=1, nullable=False)
 
@@ -27,3 +31,4 @@ class OrderItems(Base):
 
     orders = relationship("Orders", back_populates="order_items")
     product = relationship("Products")
+    color = relationship("Colors")

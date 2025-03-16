@@ -6,6 +6,7 @@ from sqlalchemy.orm import relationship
 
 from Application.Database import Base
 
+from .color import product_colors
 from .tag import product_tags
 
 
@@ -19,8 +20,6 @@ class Products(Base):
     description = Column(String(500), nullable=False)
 
     sizes = Column(ARRAY(Integer), nullable=True)
-
-    colors = Column(ARRAY(String), nullable=True)
 
     dimensions = Column(String, nullable=True)
 
@@ -41,3 +40,4 @@ class Products(Base):
     images = relationship("ProductImages", back_populates="product")
     tags = relationship("Tags", secondary=product_tags, back_populates="products")
     inventories = relationship("ProductInventory", back_populates="product")
+    colors = relationship("Colors", secondary=product_colors, back_populates="products")

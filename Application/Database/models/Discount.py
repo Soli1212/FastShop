@@ -11,7 +11,7 @@ class Discounts(Base):
 
     id = Column(Integer, primary_key=True, index=True)
 
-    code = Column(String, unique=True, index=True, nullable=False)
+    code = Column(String(6), unique=True, index=True, nullable=False)
 
     discount_percentage = Column(Float, nullable=False)
 

@@ -11,8 +11,6 @@ class ProductImages(Base):
 
     url = Column(String, nullable=False)
 
-    color = Column(String, nullable=False)
-
     product_id = Column(
         Integer,
         ForeignKey("products.id", ondelete="CASCADE", onupdate="CASCADE"),
@@ -20,6 +18,13 @@ class ProductImages(Base):
         index=True,
     )
 
+    color_id = Column(
+        Integer,
+        ForeignKey("colors.id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+    )
+
     is_main = Column(Boolean, default=False, index=True)
 
     product = relationship("Products", back_populates="images")
+    color = relationship("Colors")

@@ -2,9 +2,13 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Application.Database.repositories import address_repository
-from Application.Database.repositories import order_repository
-from Domain.Errors.address import AddressLimit, InvalidProvince, NoAddressWasFound, ActiveOrderAddress
+from Application.Database.repositories import address_repository, order_repository
+from Domain.Errors.address import (
+    ActiveOrderAddress,
+    AddressLimit,
+    InvalidProvince,
+    NoAddressWasFound,
+)
 from Domain.schemas.address_schemas import NewAddress, UpdateAddress
 from utils import json_response
 
@@ -59,9 +63,11 @@ async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
 
 
 async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
-    if await order_repository.check_pending_order_address(db = db, address_id = address_id, user_id = user_id):
+    if await order_repository.check_pending_order_address(
+        db=db, address_id=address_id, user_id=user_id
+    ):
         raise ActiveOrderAddress
-    
+
     if await address_repository.delete_address(
         db=db, address_id=address_id, user_id=user_id
     ):
@@ -87,6 +93,6 @@ async def my_addresses(db: AsyncSession, user_id: UUID):
     Addresses = await address_repository.get_my_addresses(db, user_id=user_id)
 
     if not Addresses:
-        return json_response(msg = "You have not registered an address yet.")
+        return json_response(msg="You have not registered an address yet.")
 
     return [i["Addresses"] for i in Addresses]

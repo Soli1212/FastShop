@@ -10,7 +10,7 @@ from Domain.schemas.cart_schemas import CartItem, DeleteItem
 async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):
     """Add or update an item in the user's cart."""
     key = f"cart:{user_id}"
-    field = f"{item.product_id}:{item.color}:{item.size}"
+    field = f"{item.product_id}:{item.color_id}:{item.size}"
     existing_data = await rds.hget(key, field)
 
     if existing_data:
@@ -22,7 +22,7 @@ async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):
         new_item = {
             "product_id": str(item.product_id),
             "quantity": item.quantity,
-            "color": item.color,
+            "color_id": item.color_id,
             "size": item.size,
         }
         await rds.hset(key, field, dumps(new_item))
@@ -37,7 +37,7 @@ async def add_or_update_cart(rds: Redis, item: CartItem, user_id: UUID):
 async def remove_cart_item(rds: Redis, user_id: UUID, item: DeleteItem):
     """Remove an item from the user's cart."""
     key = f"cart:{user_id}"
-    field = f"{item.product_id}:{item.color}:{item.size}"
+    field = f"{item.product_id}:{item.color_id}:{item.size}"
     existing_data = await rds.hget(key, field)
 
     if not existing_data:

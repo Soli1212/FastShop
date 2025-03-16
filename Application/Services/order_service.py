@@ -58,7 +58,7 @@ def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
     for item in user_cart:
         product_id = int(item["product_id"])
         size = item.get("size")
-        color = item.get("color")
+        color = item.get("color_id")
         quantity = item["quantity"]
 
         product = products_map.get(product_id)
@@ -67,7 +67,7 @@ def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
             raise ProductNotFound
 
         variant_key = (size, color)
-        variants = {(inv.size, inv.color): inv for inv in product["inventories"]}
+        variants = {(inv.size, inv.color_id): inv for inv in product["inventories"]}
         variant = variants.get(variant_key)
 
         if not variant:
@@ -170,7 +170,7 @@ async def order_confirmation(
                 order_id=add_new_order,
                 product_id=item["product_id"],
                 size=item["size"],
-                color=item["color"],
+                color_id=item["color_id"],
                 quantity=item["quantity"],
                 price=item["price"],
                 total_price=item["total_price"],

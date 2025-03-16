@@ -42,6 +42,3 @@ async def add_order_items(db: AsyncSession, order_items: list) -> None:
         )
     )
     return True
-
-
-

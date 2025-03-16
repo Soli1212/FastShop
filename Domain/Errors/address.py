@@ -31,6 +31,7 @@ class AddressNotFound(HTTPException):
             detail="Address Not Found !",
         )
 
+
 class ActiveOrderAddress(HTTPException):
     def __init__(self):
         super().__init__(
