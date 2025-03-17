@@ -1,11 +1,12 @@
 from typing import Tuple
 
-from sqlalchemy import and_
+from sqlalchemy import and_, exists, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 
-from Application.Database.models import ProductImages, Products, Tags, product_tags
+from Application.Database.models import (ProductImages, Products, Tags,
+                                         product_colors, product_tags)
 
 
 async def get_tags(db: AsyncSession):
@@ -20,10 +21,11 @@ async def get_tags(db: AsyncSession):
 
 async def get_tag_products(
     db: AsyncSession,
-    filters_list: list,
+    tag_id: int,
+    filters: dict,
+    order_by: str,
+    page: int,
     limit: int,
-    order_by: str = "new",
-    page: int = 0,
 ) -> Tuple[list, bool]:
 
     query = (
@@ -32,6 +34,7 @@ async def get_tag_products(
             Products.name,
             Products.price,
             Products.discounted_price,
+            Products.inventory,
             ProductImages.url,
         )
         .join(product_tags, product_tags.c.product_id == Products.id)
@@ -42,29 +45,44 @@ async def get_tag_products(
                 ProductImages.is_main.is_(True),
             ),
         )
-        .where(*filters_list)
-        .order_by(Products.created_at.desc(), Products.id.desc())
-        .limit(limit + 1)
-        .offset(page * limit)
+        .where(product_tags.c.tag_id == tag_id)
     )
 
-    match order_by:
-        case "new":
-            query = query.order_by(Products.created_at.desc(), Products.id.desc())
-        case "sale":
-            query = query.order_by(Products.best_selling.desc(), Products.id.desc())
-        case "mxp":
-            query = query.order_by(Products.price.desc())
-        case "mnp":
-            query = query.order_by(Products.price.asc())
-        case _:
-            query = query.order_by(Products.created_at.desc(), Products.id.desc())
+    if min_price := filters.get("min_price"):
+        query = query.where(Products.price >= min_price)
+
+    if max_price := filters.get("max_price"):
+        query = query.where(
+            or_(Products.discounted_price <= max_price, Products.price <= max_price)
+        )
+
+    if size := filters.get("size"):
+        size_list = [int(s) for s in size.split("-")]
+        query = query.where(Products.sizes.overlap(size_list))
+
+    if color := filters.get("color"):
+        color_ids = [int(c) for c in color.split("-")]
+        query = (
+            query.join(product_colors, product_colors.c.product_id == Products.id)
+            .where(product_colors.c.color_id.in_(color_ids))
+            .group_by(Products.id, ProductImages.url)
+            .having(func.count(product_colors.c.color_id) >= len(color_ids))
+        )
+
+    order_mapping = {
+        "new": Products.created_at.desc(),
+        "sale": Products.best_selling.desc(),
+        "mxp": Products.price.desc(),
+        "mnp": Products.price.asc(),
+        "deafult": Products.id.desc(),
+    }
+
+    query = query.order_by(order_mapping.get(order_by, Products.id.desc()))
+
+    query = query.limit(limit + 1).offset(page * limit)
 
     result = await db.execute(query)
     products = result.mappings().all()
 
     has_next = len(products) > limit
-    if has_next:
-        products = products[:-1]
-
-    return products, has_next
+    return products[:limit], has_next

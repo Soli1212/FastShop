@@ -10,14 +10,8 @@ from Application.Database.models import Discounts
 from Application.Payment.zarinpal_pay import ZarinPalPayment
 from Application.RedisDB.connection import RedisConnection
 from Application.RedisDB.RedisServices import temp_order_service
-from Presentation import (
-    AddressRouter,
-    CartRouter,
-    OrderRouter,
-    ProductRouter,
-    TagRouter,
-    UserRouter,
-)
+from Presentation import (AddressRouter, CartRouter, OrderRouter,
+                          ProductRouter, TagRouter, UserRouter)
 
 app = FastAPI()
 

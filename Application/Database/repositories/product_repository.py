@@ -3,13 +3,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
 
-from Application.Database.models import (
-    Colors,
-    ProductImages,
-    ProductInventory,
-    Products,
-    Tags,
-)
+from Application.Database.models import (Colors, ProductImages,
+                                         ProductInventory, Products, Tags)
 
 
 async def get_product_details(db: AsyncSession, product_id: int):
@@ -62,7 +57,7 @@ async def filter_products(db: AsyncSession, limit: int, offset: int, filter):
 
     has_next = len(products) > limit
     if has_next:
-        products = products[:-1]
+        products = products[:limit]
 
     return products, has_next
 

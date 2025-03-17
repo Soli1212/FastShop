@@ -2,13 +2,10 @@ from uuid import UUID
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from Application.Database.repositories import address_repository, order_repository
-from Domain.Errors.address import (
-    ActiveOrderAddress,
-    AddressLimit,
-    InvalidProvince,
-    NoAddressWasFound,
-)
+from Application.Database.repositories import (address_repository,
+                                               order_repository)
+from Domain.Errors.address import (ActiveOrderAddress, AddressLimit,
+                                   InvalidProvince, NoAddressWasFound)
 from Domain.schemas.address_schemas import NewAddress, UpdateAddress
 from utils import json_response
 

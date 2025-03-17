@@ -1,3 +1,5 @@
+from typing import Optional
+
 from sqlalchemy import func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -12,35 +14,30 @@ async def get_tags(db: AsyncSession):
 
 
 async def get_tag_products(
-    db: AsyncSession, filters: dict, order_by: str, tag_id: int, limit: int = 2
+    db: AsyncSession,
+    tag_id: int,
+    min_price: Optional[int],
+    max_price: Optional[int],
+    size: Optional[str],
+    color: Optional[str],
+    order_by: str,
+    page: int,
+    limit: int,
 ):
-    filters_list = [product_tags.c.tag_id == tag_id]
+    filters = {
+        "min_price": min_price,
+        "max_price": max_price,
+        "size": size,
+        "color": color,
+    }
 
-    if min_price := filters.get("min_price"):
-        filters_list.append(Products.price >= int(min_price))
-
-    if max_price := filters.get("max_price"):
-        filters_list.append(
-            func.coalesce(Products.discounted_price, Products.price) <= int(max_price)
-        )
-
-    if size := filters.get("size"):
-        size_list = [int(i) for i in size.split("-")]
-        filters_list.append(Products.sizes.overlap(size_list))
-
-    if color := filters.get("color"):
-        color_list = color.split("-")
-        filters_list.append(Products.colors.overlap(color_list))
-
-    tag_products = await tag_repository.get_tag_products(
+    products_tag = await tag_repository.get_tag_products(
         db=db,
-        filters_list=filters_list,
-        limit=limit,
-        page=int(filters.get("page", 0)),
+        tag_id=tag_id,
+        filters=filters,
         order_by=order_by,
+        page=page,
+        limit=limit,
     )
 
-    if not tag_products[0]:
-        raise PageNotFound
-
-    return {"next_page": tag_products[1], "products": tag_products[0]}
+    return {"next_page": products_tag[1], "products": products_tag[0]}
