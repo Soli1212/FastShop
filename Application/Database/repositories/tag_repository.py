@@ -5,8 +5,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload
 
-from Application.Database.models import (ProductImages, Products, Tags,
-                                         product_colors, product_tags)
+from Application.Database.models import (
+    ProductImages,
+    Products,
+    Tags,
+    product_colors,
+    product_tags,
+)
 
 
 async def get_tags(db: AsyncSession):

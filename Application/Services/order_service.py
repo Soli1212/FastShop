@@ -7,18 +7,25 @@ from fastapi import Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Database.models import OrderItems
-from Application.Database.repositories import (address_repository,
-                                               discount_repository,
-                                               order_repository,
-                                               product_repository)
+from Application.Database.repositories import (
+    address_repository,
+    discount_repository,
+    order_repository,
+    product_repository,
+)
 from Application.Payment import ZarinPalPayment
-from Application.RedisDB.RedisServices import (cart_item_service,
-                                               temp_order_service)
+from Application.RedisDB.RedisServices import cart_item_service, temp_order_service
 from Domain.Errors.address import AddressNotFound
-from Domain.Errors.discount import (DiscountLimit, InvalidDiscountCode,
-                                    UnauthorizeDiscount)
-from Domain.Errors.order import (InsufficientInventory, ProductNotAvalible,
-                                 ProductNotFound)
+from Domain.Errors.discount import (
+    DiscountLimit,
+    InvalidDiscountCode,
+    UnauthorizeDiscount,
+)
+from Domain.Errors.order import (
+    InsufficientInventory,
+    ProductNotAvalible,
+    ProductNotFound,
+)
 from Domain.Errors.payment import PaymentFailed
 from Domain.schemas.order_schemas import NewOrder, Order
 from utils import json_response
@@ -171,7 +178,7 @@ async def order_confirmation(
             for item in temp_order["cart_items"]
         ]
         update_inventory_mapping = [
-            (i.product_id, i.color, i.size, i.quantity) for i in order_items
+            (i.product_id, i.color_id, i.size, i.quantity) for i in order_items
         ]
 
         add_order_items, update_products_inventory = await gather(

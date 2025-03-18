@@ -20,7 +20,7 @@ class OrderItems(Base):
     color_id = Column(
         Integer,
         ForeignKey("colors.id", ondelete="CASCADE", onupdate="CASCADE"),
-        nullable=False,
+        nullable=True,
     )
 
     quantity = Column(Integer, default=1, nullable=False)

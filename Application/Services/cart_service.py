@@ -48,39 +48,36 @@ async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID) -> dict:
 
 
 def calculate_final_price(cart_items: list, product_map: dict):
-    total_cart = 0
-    total_discount = 0
     formatted_cart = []
+    total_cart = total_discount = 0
 
     for item in cart_items:
-        product_id = int(item["product_id"])
-        product = product_map.get(product_id)
-
+        product = product_map.get(int(item["product_id"]))
         if not product:
             continue
 
-        original_price = product.get("price")
-        discounted_price = product.get("discounted_price")
-        quantity = item["quantity"]
+        original = product["price"]
+        discounted = product.get("discounted_price")
+        qty = item["quantity"]
 
-        final_price = discounted_price if discounted_price else original_price
-        item_discount = (original_price - final_price) * quantity
+        final = discounted or original
+        item_discount = (original - final) * qty
+
+        formatted_cart.append(
+            {
+                "product_id": product["id"],
+                "name": product["name"],
+                "quantity": qty,
+                "price": original,
+                "discounted_price": discounted or 0,
+                "total_price": final * qty,
+                "color_id": item.get("color_id"),
+                "size": item.get("size"),
+            }
+        )
+
+        total_cart += final * qty
         total_discount += item_discount
-
-        final_price *= quantity
-
-        formatted_item = {
-            "product_id": product_id,
-            "name": product["name"],
-            "quantity": quantity,
-            "price": original_price,
-            "discounted_price": discounted_price or 0,
-            "total_price": final_price,
-            "color_id": item.get("color_id"),
-            "size": item.get("size"),
-        }
-        formatted_cart.append(formatted_item)
-        total_cart += final_price
 
     return {
         "cart_items": formatted_cart,

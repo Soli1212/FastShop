@@ -1,10 +1,15 @@
-from sqlalchemy import and_, case, exists, or_, update
+from sqlalchemy import and_, case, exists, or_, update, bindparam
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
 
-from Application.Database.models import (Colors, ProductImages,
-                                         ProductInventory, Products, Tags)
+from Application.Database.models import (
+    Colors,
+    ProductImages,
+    ProductInventory,
+    Products,
+    Tags,
+)
 
 
 async def get_product_details(db: AsyncSession, product_id: int):
@@ -136,7 +141,7 @@ async def update_inventory(
 
     for pid, color_id, size, qty in product_updates:
         color_clause = (
-            ProductInventory.color_id == None
+            ProductInventory.color == None
             if color_id is None
             else ProductInventory.color_id == color_id
         )
@@ -148,7 +153,9 @@ async def update_inventory(
         )
 
         condition = and_(ProductInventory.product_id == pid, color_clause, size_clause)
+
         update_conditions.append((condition, ProductInventory.inventory - qty))
+
         where_conditions.append(condition)
 
     stmt = (
