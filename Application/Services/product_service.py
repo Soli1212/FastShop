@@ -63,3 +63,23 @@ async def get_filtered_products(
         raise PageNotFound
 
     return {"next_page": filtered_products[1], "products": filtered_products[0]}
+
+
+async def get_random_products(
+    db: AsyncSession,
+    filter_type: str,
+):
+    """Get random products"""
+
+    filter_mapping = {
+        "new": Products.new == True,
+        "lux": Products.lux == True,
+        "best_selling": Products.best_selling == True,
+        "discounted": Products.discounted_price > 0,
+    }
+
+    random_products = await product_repository.get_random_products(
+        db=db, filter_condition=filter_mapping.get(filter_type, Products.lux == True)
+    )
+
+    return random_products

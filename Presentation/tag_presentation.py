@@ -36,3 +36,11 @@ async def tags(
         page=page,
         limit=2,
     )
+
+
+@Router.get("/random/{tag_id}")
+async def random(
+    db: AsyncSession = Depends(get_db),
+    tag_id: int = Path(gt=0),
+):
+    return await tag_service.get_random_products_tag(db=db, tag_id=tag_id)

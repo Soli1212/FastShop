@@ -47,6 +47,11 @@ async def discounted_products(
     )
 
 
+@Router.get("/random/{filter_random}")
+async def random_products(filter_random, db: AsyncSession = Depends(get_db)):
+    return await product_service.get_random_products(db=db, filter_type=filter_random)
+
+
 @Router.get("/{product_id}")
 async def Products(product_id: int = Path(gt=0), db: AsyncSession = Depends(get_db)):
     return await product_service.load_product(db=db, product_id=product_id)

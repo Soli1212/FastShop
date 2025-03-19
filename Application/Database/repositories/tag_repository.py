@@ -1,9 +1,9 @@
 from typing import Tuple
 
-from sqlalchemy import and_, exists, func, or_
+from sqlalchemy import and_, func, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, load_only, selectinload
 
 from Application.Database.models import (
     ProductImages,
@@ -91,3 +91,42 @@ async def get_tag_products(
 
     has_next = len(products) > limit
     return products[:limit], has_next
+
+
+async def get_random_products_tag(db: AsyncSession, tag_id: int):
+    subquery = (
+        select(
+            Products.id,
+            Products.name,
+            Products.price,
+            Products.discounted_price,
+            ProductImages.url.label("main_image"),
+            func.random().label("rand"),
+        )
+        .join(product_tags, product_tags.c.product_id == Products.id)
+        .join(Tags, Tags.id == product_tags.c.tag_id)
+        .outerjoin(
+            ProductImages,
+            (ProductImages.product_id == Products.id) & (ProductImages.is_main == True),
+        )
+        .where(Tags.id == tag_id)
+        .order_by(func.random())
+        .limit(20)
+        .alias("subq")
+    )
+
+    query = (
+        select(
+            subquery.c.id,
+            subquery.c.name,
+            subquery.c.price,
+            subquery.c.discounted_price,
+            subquery.c.main_image,
+        )
+        .distinct(subquery.c.id)
+        .order_by(subquery.c.id, subquery.c.rand)
+        .limit(10)
+    )
+
+    result = await db.execute(query)
+    return result.mappings().all()

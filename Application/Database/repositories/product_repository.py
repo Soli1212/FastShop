@@ -1,4 +1,4 @@
-from sqlalchemy import and_, case, exists, or_, update
+from sqlalchemy import and_, case, exists, func, or_, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
@@ -167,3 +167,28 @@ async def update_inventory(
 
     await db.execute(stmt)
     return True
+
+
+async def get_random_products(db: AsyncSession, filter_condition):
+    query = (
+        select(
+            Products.id,
+            Products.name,
+            Products.price,
+            Products.discounted_price,
+            ProductImages.url.label("main_image"),
+        )
+        .outerjoin(
+            ProductImages,
+            and_(
+                ProductImages.product_id == Products.id, ProductImages.is_main.is_(True)
+            ),
+        )
+        .where(filter_condition)
+        .distinct(Products.id)
+        .order_by(Products.id, func.random())
+        .limit(10)
+    )
+
+    result = await db.execute(query)
+    return [dict(row) for row in result.mappings().all()]

@@ -43,3 +43,7 @@ async def get_tag_products(
     )
 
     return {"next_page": products_tag[1], "products": products_tag[0]}
+
+
+async def get_random_products_tag(db: AsyncSession, tag_id: int):
+    return await tag_repository.get_random_products_tag(db=db, tag_id=tag_id)
