@@ -16,6 +16,7 @@ from utils import delete_cookie, json_response, set_cookie
 
 
 async def send_auth_code(rds: Redis, NewUserData: UserPhone):
+    """Send verification code to user"""
     code = await vcode_service.new_verification_code(rds=rds, user=NewUserData)
     return json_response(msg=code, key="code")  # send code via SMS
 
@@ -23,6 +24,7 @@ async def send_auth_code(rds: Redis, NewUserData: UserPhone):
 async def sing_in(
     db: AsyncSession, rds: Redis, response: Response, VerifyData: VerifyData
 ):
+    """User verification and login"""
     vcode = await vcode_service.get_verification_code(rds=rds, phone=VerifyData.phone)
     if not vcode:
         raise NoneCode
@@ -51,6 +53,7 @@ async def sing_in(
 
 
 async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: UUID):
+    """Update user information"""
     info = profile.dict(exclude_unset=True)
     if not info:
         raise EmptyValues
@@ -61,11 +64,13 @@ async def update_profile(db: AsyncSession, profile: UpdateProfile, user_id: UUID
 
 
 async def get_me(db: AsyncSession, user_id: UUID):
+    """User profile"""
     if user := await user_repository.get_user_by_id(db=db, user_id=user_id):
         return user
 
 
 async def logout(rds: Redis, request: Request, response: Response):
+    """Log out and block tokens"""
     refresh_token = request.cookies.get("RefreshToken")
     if refresh_token:
         expiry = jwt_handler.get_token_exp_as_seconds(token=refresh_token)

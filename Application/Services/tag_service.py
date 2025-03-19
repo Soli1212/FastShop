@@ -9,6 +9,7 @@ from Domain.Errors.tag import PageNotFound
 
 
 async def get_tags(db: AsyncSession):
+    """Get a list of tags"""
     tags = await tag_repository.get_tags(db=db)
     return [i["Tags"] for i in tags]
 
@@ -24,6 +25,7 @@ async def get_tag_products(
     page: int,
     limit: int,
 ):
+    """Get a list of products related to a specific tag"""
     filters = {
         "min_price": min_price,
         "max_price": max_price,

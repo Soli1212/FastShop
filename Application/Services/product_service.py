@@ -8,6 +8,7 @@ from Domain.Errors.product import PageNotFound
 
 
 async def load_product(db: AsyncSession, product_id: int):
+    """Getting the specifications of a product"""
     if product := await product_repository.get_product_details(
         db=db, product_id=product_id
     ):
@@ -41,6 +42,7 @@ class ProductFilterType(Enum):
 async def get_filtered_products(
     db: AsyncSession, filter_type: ProductFilterType, offset: int, limit: int = 2
 ):
+    """Get filtered products"""
     match filter_type:
         case ProductFilterType.LUX:
             filter_condition = Products.lux == True

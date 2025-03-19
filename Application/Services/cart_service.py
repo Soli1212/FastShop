@@ -11,6 +11,7 @@ from utils import json_response
 
 
 async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUID):
+    """Check product availability and add to cart."""
     product_inventory = await product_repository.check_variant_availability(
         db=db,
         product_id=item.product_id,
@@ -27,11 +28,13 @@ async def add_to_cart(db: AsyncSession, rds: Redis, item: CartItem, user_id: UUI
 
 
 async def delete_product(db: AsyncSession, rds: Redis, user_id: UUID, item: DeleteItem):
+    """Remove product from shopping cart"""
     if await cart_item_service.remove_cart_item(rds=rds, user_id=user_id, item=item):
         return await get_cart(db=db, rds=rds, user_id=user_id)
 
 
 async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID) -> dict:
+    """Get shopping cart"""
     cart_items = await cart_item_service.get_cart_items(rds=rds, user_id=user_id)
     if not cart_items:
         return json_response(msg="Your cart is empty")
@@ -48,6 +51,7 @@ async def get_cart(db: AsyncSession, rds: Redis, user_id: UUID) -> dict:
 
 
 def calculate_final_price(cart_items: list, product_map: dict):
+    """Calculation of price and invoice"""
     formatted_cart = []
     total_cart = total_discount = 0
 

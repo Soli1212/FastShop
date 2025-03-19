@@ -48,6 +48,8 @@ IRANIAN_PROVINCES = {
 
 
 async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
+    """Add address"""
+
     if await address_repository.get_address_count(db=db, user_id=user_id) >= 3:
         raise AddressLimit
 
@@ -63,6 +65,8 @@ async def new_address(db: AsyncSession, address: NewAddress, user_id: UUID):
 
 
 async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
+    """Delete address"""
+
     if await order_repository.check_pending_order_address(
         db=db, address_id=address_id, user_id=user_id
     ):
@@ -79,6 +83,8 @@ async def delete_address(db: AsyncSession, user_id: UUID, address_id: int):
 async def update_address(
     db: AsyncSession, user_id: UUID, address_id: int, uaddress: UpdateAddress
 ):
+    """Update User Address"""
+
     if address := await address_repository.get_address(
         db=db, address_id=address_id, user_id=user_id
     ):
@@ -90,6 +96,8 @@ async def update_address(
 
 
 async def my_addresses(db: AsyncSession, user_id: UUID):
+    """get user address"""
+
     Addresses = await address_repository.get_my_addresses(db, user_id=user_id)
 
     if not Addresses:

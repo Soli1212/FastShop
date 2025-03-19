@@ -34,6 +34,7 @@ from .cart_service import calculate_final_price
 
 
 def check_discount_code(dicount, total_price: int, user_id: int):
+    """Checking the validity of the discount code"""
     if total_price < dicount.min_order_value:
         raise DiscountLimit(limit=str(dicount.min_order_value))
 
@@ -55,6 +56,7 @@ def check_discount_code(dicount, total_price: int, user_id: int):
 
 
 def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
+    """Checking the inventory of products in the shopping cart"""
     for item in user_cart:
         product_id = int(item["product_id"])
         size = item.get("size")
@@ -79,6 +81,7 @@ def validate_cart_inventory(products_map: dict, user_cart: list) -> None:
 
 
 async def prepare_order(user_id: UUID, order: Order, db: AsyncSession, rds: Redis):
+    "Issuing invoices and creating payment links"
     UserCart = await cart_item_service.get_cart_items(rds=rds, user_id=user_id)
     if not UserCart:
         return json_response(msg="Your cart is empty")
@@ -141,6 +144,7 @@ async def prepare_order(user_id: UUID, order: Order, db: AsyncSession, rds: Redi
 async def order_confirmation(
     user_id: UUID, request: Request, db: AsyncSession, rds: Redis
 ):
+    """Final registration of invoices and orders"""
     temp_order = await temp_order_service.user_temp_order(user_id=user_id, rds=rds)
 
     if not temp_order:
