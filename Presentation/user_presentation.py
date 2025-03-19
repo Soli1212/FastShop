@@ -6,12 +6,15 @@ from Application.Database import get_db
 from Application.RedisDB import RedisConnection
 from Application.Services import user_service
 from Domain.schemas.user_schemas import UpdateProfile, UserPhone, VerifyData
+from utils import limiter
 
 Router = APIRouter()
 
 
 @Router.post("/authcode", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit("5/minute")
 async def Verify_New_User(
+    request: Request,
     NewUserData: UserPhone,
     rds: RedisConnection.get_client = Depends(),
 ):
@@ -19,7 +22,9 @@ async def Verify_New_User(
 
 
 @Router.post("/singin", status_code=status.HTTP_202_ACCEPTED)
+@limiter.limit("3/minute")
 async def LoginRequest(
+    request: Request,
     UserData: VerifyData,
     response: Response,
     db: AsyncSession = Depends(get_db),
@@ -31,7 +36,9 @@ async def LoginRequest(
 
 
 @Router.patch("/update", status_code=status.HTTP_200_OK)
+@limiter.limit("7/minute")
 async def update(
+    request: Request,
     profile: UpdateProfile,
     auth: authorize = Depends(),
     db: AsyncSession = Depends(get_db),

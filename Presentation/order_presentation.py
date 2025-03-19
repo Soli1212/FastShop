@@ -5,12 +5,15 @@ from Application.Auth import authorize
 from Application.Database import get_db
 from Application.Services import order_service
 from Domain.schemas.order_schemas import Order
+from utils import limiter
 
 Router = APIRouter()
 
 
 @Router.post("/prepare")
+@limiter.limit("10/minute")
 async def prepare(
+    request: Request,
     order: Order,
     auth: authorize = Depends(),
     db: AsyncSession = Depends(get_db),

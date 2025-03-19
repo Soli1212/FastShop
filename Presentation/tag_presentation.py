@@ -14,10 +14,8 @@ async def me(db: AsyncSession = Depends(get_db)):
     return await tag_service.get_tags(db=db)
 
 
-# routes/tags.py
 @Router.get("/{tag_id}")
 async def tags(
-    request: Request,
     db: AsyncSession = Depends(get_db),
     tag_id: int = Path(gt=0),
     min_price: Optional[int] = Query(default=None, ge=35000),

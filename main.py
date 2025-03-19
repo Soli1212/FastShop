@@ -1,15 +1,10 @@
-from datetime import datetime, timedelta
-
 from fastapi import Depends, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from slowapi import _rate_limit_exceeded_handler
 
 from Application.Auth import authorize
 from Application.Database.connection import get_db, init_db
-from Application.Database.models import Discounts
-from Application.Payment.zarinpal_pay import ZarinPalPayment
 from Application.RedisDB.connection import RedisConnection
-from Application.RedisDB.RedisServices import temp_order_service
 from Presentation import (
     AddressRouter,
     CartRouter,
@@ -18,6 +13,7 @@ from Presentation import (
     TagRouter,
     UserRouter,
 )
+from utils import limiter
 
 app = FastAPI()
 
@@ -44,28 +40,6 @@ app.include_router(OrderRouter, prefix="/order", tags=["order"])
 
 
 # Middlewares --------------------------
-LOGOUT_DEPENDS = {
-    "/user/sing-up",
-    "/user/singup",
-    "/user/singin",
-    "/user/forget-pass",
-    "/user/forget-Pass",
-    "/user/change-pass",
-}
-
-
-@app.middleware("http")
-async def add_process_time_header(request: Request, call_next):
-    if request.url.path in LOGOUT_DEPENDS:
-        access_token = request.cookies.get("AccessToken")
-        refresh_token = request.cookies.get("RefreshToken")
-
-        if access_token and refresh_token:
-            return RedirectResponse(url="/user/me", status_code=302)
-
-    return await call_next(request)
-
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -73,6 +47,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+# Config RateLimiter---------------------------------------
+
+app.state.limiter = limiter
+app.add_exception_handler(429, _rate_limit_exceeded_handler)
 
 
 # Root Endpoint ------------------------

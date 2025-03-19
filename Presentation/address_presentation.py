@@ -1,10 +1,11 @@
-from fastapi import APIRouter, Depends, Path, Request, Response, status
+from fastapi import APIRouter, Depends, Path, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from Application.Auth import authorize
 from Application.Database import get_db
 from Application.Services import address_service
 from Domain.schemas.address_schemas import NewAddress, UpdateAddress
+from utils import limiter
 
 Router = APIRouter()
 
@@ -18,7 +19,9 @@ async def me(
 
 
 @Router.post("/new", status_code=status.HTTP_201_CREATED)
+@limiter.limit("2/minute")
 async def New_Address(
+    request: Request,
     Address: NewAddress,
     auth: authorize = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -27,7 +30,9 @@ async def New_Address(
 
 
 @Router.delete("/delete/{Address_id}", status_code=status.HTTP_200_OK)
+@limiter.limit("2/minute")
 async def Delete_Address(
+    request: Request,
     Address_id: int = Path(gt=0),
     auth: authorize = Depends(),
     db: AsyncSession = Depends(get_db),
@@ -38,7 +43,9 @@ async def Delete_Address(
 
 
 @Router.patch("/update/{Address_id}", status_code=status.HTTP_200_OK)
+@limiter.limit("7/minute")
 async def Update_Address(
+    request: Request,
     UAddress: UpdateAddress,
     Address_id: int = Path(gt=0),
     auth: authorize = Depends(),
