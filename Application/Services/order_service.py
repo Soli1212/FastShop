@@ -198,3 +198,7 @@ async def order_confirmation(
             )
 
             return json_response(msg="Your order has been successfully placed.")
+
+
+async def my_orders(db: AsyncSession, user_id: UUID):
+    return await order_repository.get_my_orders(db=db, user_id=user_id)

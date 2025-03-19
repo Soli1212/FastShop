@@ -30,3 +30,8 @@ async def confirmation(
     return await order_service.order_confirmation(
         request=Request, user_id=auth["id"], db=db, rds=auth["rds"]
     )
+
+
+@Router.get("/")
+async def my_orders(auth: authorize = Depends(), db: AsyncSession = Depends(get_db)):
+    return await order_service.my_orders(db=db, user_id=auth["id"])

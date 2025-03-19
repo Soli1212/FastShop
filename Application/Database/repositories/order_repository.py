@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from sqlalchemy.orm import joinedload, load_only, selectinload
 
-from Application.Database.models import OrderItems, Orders
+from Application.Database.models import OrderItems, Orders, Products
 from Application.Database.models.order import OrderStatusEnum
 from Domain.schemas.order_schemas import NewOrder
 
@@ -42,3 +42,26 @@ async def add_order_items(db: AsyncSession, order_items: list) -> None:
         )
     )
     return True
+
+
+async def get_my_orders(db: AsyncSession, user_id: UUID):
+    query = select(Orders).options(
+        load_only(
+            Orders.status,
+            Orders.total_price,
+            Orders.discount_id,
+        ),
+        selectinload(Orders.order_items)
+        .load_only(
+            OrderItems.color_id,
+            OrderItems.size,
+            OrderItems.quantity,
+            OrderItems.price,
+            OrderItems.total_price,
+        )
+        .joinedload(OrderItems.product)
+        .load_only(Products.name),
+    )
+    result = await db.execute(query)
+
+    return result.scalars().all()
