@@ -23,8 +23,8 @@ async def init_db():
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         print("Database connected successfully")
-    except:
-        print("Database connection failed")
+    except Exception as e:
+        print(f"Database connection failed {e}")
 
 
 async def get_db():

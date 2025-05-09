@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, UUID
 from sqlalchemy.orm import relationship
 
 from Application.Database import Base
@@ -21,6 +21,6 @@ class Discounts(Base):
 
     end_date = Column(DateTime, nullable=False)
 
-    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
+    user_id = Column(UUID, ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
 
     orders = relationship("Orders", back_populates="discount")
