@@ -83,3 +83,22 @@ async def get_random_products(
     )
 
     return random_products
+
+
+async def search_products(
+    db: AsyncSession,
+    offset: int, 
+    prompt: str,
+    limit: int = 2,
+    
+):
+    """search products"""
+    
+    products = await product_repository.search_products(
+        db = db, limit = limit, offset = offset, prompt=prompt
+    )
+
+    if not products[0]:
+        raise PageNotFound
+
+    return {"next_page": products[1], "products": products[0]}

@@ -192,3 +192,41 @@ async def get_random_products(db: AsyncSession, filter_condition):
 
     result = await db.execute(query)
     return [dict(row) for row in result.mappings().all()]
+
+async def search_products(db: AsyncSession, prompt: str, limit: int, offset: int):
+    query = (
+        select(
+            Products.id,
+            Products.name,
+            Products.price,
+            Products.discounted_price,
+            ProductImages.url.label("main_image"),
+        )
+        .outerjoin(
+            ProductImages,
+            and_(
+                ProductImages.product_id == Products.id,
+                ProductImages.is_main.is_(True)
+            ),
+        )
+        .filter(
+            or_(
+                Products.name.ilike(f"%{prompt}%"),
+                Products.description.ilike(f"%{prompt}%")
+            )
+        )
+        .distinct(Products.id)
+        .order_by(Products.id, func.random())
+        .limit(limit + 1)
+        .offset(limit * offset)
+    )
+
+    result = await db.execute(query)
+
+    products = result.mappings().all()
+
+    has_next = len(products) > limit
+    if has_next:
+        products = products[:limit]
+
+    return products, has_next
